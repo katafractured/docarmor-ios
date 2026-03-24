@@ -38,20 +38,26 @@ struct PhotoPickerView: UIViewControllerRepresentable {
                 return
             }
 
-            var images: [UIImage] = []
+            // Use an actor-isolated container to prevent data races when multiple
+            // loadObject callbacks complete concurrently on arbitrary threads.
+            let count = results.count
+            var ordered = [Int: UIImage](minimumCapacity: count)
+            let lock = NSLock()
             let group = DispatchGroup()
 
-            for result in results {
+            for (index, result) in results.enumerated() {
                 group.enter()
                 result.itemProvider.loadObject(ofClass: UIImage.self) { object, _ in
                     defer { group.leave() }
                     if let image = object as? UIImage {
-                        images.append(image)
+                        lock.withLock { ordered[index] = image }
                     }
                 }
             }
 
             group.notify(queue: .main) { [weak self] in
+                // Preserve selection order regardless of callback completion order
+                let images = (0..<count).compactMap { ordered[$0] }
                 self?.onCompletion(images)
             }
         }

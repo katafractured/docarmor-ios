@@ -17,7 +17,9 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: auth.state == .unlocked)
+        // Animate on every state transition (locked ↔ authenticating ↔ unlocked),
+        // not just the Bool flips, by using the Equatable enum value directly.
+        .animation(.easeInOut(duration: 0.25), value: auth.state)
         // Track user taps anywhere in the unlocked app for auto-lock idle timer
         .simultaneousGesture(
             TapGesture().onEnded { autoLock.recordActivity() },

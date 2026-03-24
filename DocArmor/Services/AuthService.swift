@@ -6,7 +6,7 @@ import Observation
 @MainActor
 final class AuthService {
 
-    enum AuthState {
+    enum AuthState: Equatable {
         case locked
         case authenticating
         case unlocked
@@ -15,8 +15,6 @@ final class AuthService {
     var state: AuthState = .locked
     var biometryType: LABiometryType = .none
     var authError: String?
-
-    private let context = LAContext()
 
     init() {
         checkBiometryAvailability()
@@ -28,9 +26,12 @@ final class AuthService {
 #if targetEnvironment(simulator)
         biometryType = .none
 #else
+        // Use a fresh context just for capability detection; LAContext is not reusable
+        // across evaluate calls so we never cache the instance.
+        let probeContext = LAContext()
         var error: NSError?
-        context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
-        biometryType = context.biometryType
+        probeContext.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
+        biometryType = probeContext.biometryType
 #endif
     }
 

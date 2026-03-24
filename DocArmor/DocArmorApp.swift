@@ -5,7 +5,9 @@ import SwiftData
 struct DocArmorApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
-    @State private var authService = AuthService()
+    // Both services share the same AuthService instance so AutoLock can call lock().
+    // They are initialised once in init() and stored as @State to survive re-renders.
+    @State private var authService: AuthService
     @State private var autoLockService: AutoLockService
 
     // Deep-link state for Siri / widget → open a specific document type
@@ -32,8 +34,11 @@ struct DocArmorApp: App {
             _ = try? VaultKey.generate()
         }
 
+        // Create a single AuthService and hand the same reference to AutoLockService.
+        // Using _property = State(initialValue:) is the correct pattern for initialising
+        // @State inside init() without creating a discarded duplicate instance.
         let auth = AuthService()
-        _authService = State(initialValue: auth)
+        _authService    = State(initialValue: auth)
         _autoLockService = State(initialValue: AutoLockService(authService: auth))
     }
 
