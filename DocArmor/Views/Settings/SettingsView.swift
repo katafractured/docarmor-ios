@@ -609,9 +609,23 @@ struct SettingsView: View {
             }
             .task {
                 migrateLegacyCustomPacksIfNeeded()
-                vaultKeyExists = VaultKey.exists
-                foundationModelStatus = FoundationModelAvailabilityService.currentStatus
                 refreshDerivedState()
+
+                // VaultKey.exists (Keychain) and SystemLanguageModel.default
+                // (FoundationModels framework init) are synchronous blocking calls.
+                // Running them on the main actor — even inside .task — hangs the UI
+                // immediately after Face ID when the tab is first tapped.
+                // Offload both to background threads; update @State on MainActor after.
+                async let keyExists: Bool = Task.detached(priority: .userInitiated) {
+                    VaultKey.exists
+                }.value
+                async let modelStatus: FoundationModelAvailabilityService.Status = Task.detached(priority: .userInitiated) {
+                    FoundationModelAvailabilityService.currentStatus
+                }.value
+
+                let (key, model) = await (keyExists, modelStatus)
+                vaultKeyExists = key
+                foundationModelStatus = model
             }
             .onChange(of: allDocuments) { refreshDerivedState() }
             .onChange(of: householdProfiles) { refreshDerivedState() }
