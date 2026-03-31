@@ -243,7 +243,7 @@ struct ImageCropView: View {
                         .frame(width: 36, height: 36)
                     Image(systemName: "plus")
                         .font(.caption.bold())
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 }
                 .position(CGPoint(x: touchPos.x, y: touchPos.y - previewLift))
                 .allowsHitTesting(false)
