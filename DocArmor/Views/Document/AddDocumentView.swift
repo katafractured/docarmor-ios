@@ -89,6 +89,7 @@ struct AddDocumentView: View {
     @State private var processingSubtitle: String = "Detecting text…"
     @State private var autoFilledFields: Set<String> = []
     @State private var showBackSidePrompt: Bool = false
+    @State private var ocrTask: Task<Void, Never>? = nil
 
     private var isEditing: Bool { editingDocument != nil }
 
@@ -100,13 +101,15 @@ struct AddDocumentView: View {
                 onImagesReady: { images in
                     capturedImages = images
                     updatePageLabels()
-                    stage = .processing
+                    withAnimation(.easeInOut(duration: 0.35)) { stage = .processing }
                 },
                 onImportInbox: { Task { await consumeInboxItemsForCapture() } },
                 onCancel: { dismiss() }
             )
+            .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .leading).combined(with: .opacity)))
         } else if !isEditing && stage == .processing {
             processingView
+                .transition(.opacity)
         } else {
         NavigationStack {
             Form {
@@ -136,12 +139,66 @@ struct AddDocumentView: View {
                     }
                 }
 
+                // MARK: Scanned pages preview (scan-first flow, new doc)
+                if !isEditing && !capturedImages.isEmpty {
+                    Section {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(capturedImages.indices, id: \.self) { i in
+                                    ZStack(alignment: .topTrailing) {
+                                        Image(uiImage: capturedImages[i])
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 90, height: 66)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 1))
+
+                                        Button { cropImageIndex = i } label: {
+                                            Image(systemName: "crop")
+                                                .font(.caption2.bold())
+                                                .padding(4)
+                                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 4))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .padding(4)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+
+                        Button {
+                            capturedImages.removeAll()
+                            autoFilledFields.removeAll()
+                            withAnimation(.easeInOut(duration: 0.35)) { stage = .capture }
+                        } label: {
+                            Label("Retake Scan", systemImage: "arrow.counterclockwise")
+                                .font(.subheadline)
+                        }
+                    }
+
+                    // Quality warnings at top, not buried in Pages section
+                    if !scanWarnings.isEmpty {
+                        Section {
+                            ForEach(scanWarnings, id: \.self) { warning in
+                                Label(warning, systemImage: "exclamationmark.triangle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                        .listRowBackground(Color.orange.opacity(0.06))
+                    }
+                }
+
                 // MARK: Document Info
                 Section("Document Info") {
                     TextField("Name (e.g. John's Passport)", text: $name)
                         .autocorrectionDisabled()
+                        .overlay(alignment: .trailing) {
+                            if autoFilledFields.contains("name") { aiFillBadge.padding(.trailing, 4) }
+                        }
 
-                    if let suggested = suggestedName, name.isEmpty {
+                    if let suggested = suggestedName, name.isEmpty, !autoFilledFields.contains("name") {
                         suggestionChip(label: "Use \"\(suggested)\"") {
                             name = suggested
                             suggestedName = nil
@@ -221,8 +278,11 @@ struct AddDocumentView: View {
 
                     TextField("Issuing authority", text: $issuerName)
                         .autocorrectionDisabled()
+                        .overlay(alignment: .trailing) {
+                            if autoFilledFields.contains("issuer") { aiFillBadge.padding(.trailing, 4) }
+                        }
 
-                    if let suggested = suggestedIssuer, issuerName.isEmpty {
+                    if let suggested = suggestedIssuer, issuerName.isEmpty, !autoFilledFields.contains("issuer") {
                         suggestionChip(label: "Use issuer: \(suggested)") {
                             issuerName = suggested
                             suggestedIssuer = nil
@@ -232,8 +292,11 @@ struct AddDocumentView: View {
                     TextField("ID or policy suffix", text: $identifierSuffix)
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
+                        .overlay(alignment: .trailing) {
+                            if autoFilledFields.contains("docNumber") { aiFillBadge.padding(.trailing, 4) }
+                        }
 
-                    if let suggested = suggestedDocNumber, identifierSuffix.isEmpty {
+                    if let suggested = suggestedDocNumber, identifierSuffix.isEmpty, !autoFilledFields.contains("docNumber") {
                         suggestionChip(label: "Use doc number: \(suggested)") {
                             identifierSuffix = suggested
                             suggestedDocNumber = nil
@@ -252,9 +315,12 @@ struct AddDocumentView: View {
 
                 // MARK: Expiration
                 Section("Expiration") {
-                    Toggle("Has Expiration Date", isOn: $hasExpiration)
+                    HStack {
+                        Toggle("Has Expiration Date", isOn: $hasExpiration)
+                        if autoFilledFields.contains("expiry") { aiFillBadge }
+                    }
 
-                    if !hasExpiration, let suggested = suggestedExpiry {
+                    if !hasExpiration, let suggested = suggestedExpiry, !autoFilledFields.contains("expiry") {
                         suggestionChip(label: "Set expiry: \(suggested.formatted(date: .abbreviated, time: .omitted))") {
                             hasExpiration = true
                             expirationDate = suggested
@@ -450,7 +516,8 @@ struct AddDocumentView: View {
                         }
                     }
 
-                    if !scanWarnings.isEmpty {
+                    // Edit-mode quality warnings (new-doc warnings are shown at top)
+                    if isEditing && !scanWarnings.isEmpty {
                         ForEach(scanWarnings, id: \.self) { warning in
                             Label(warning, systemImage: "exclamationmark.triangle.fill")
                                 .font(.caption)
@@ -612,21 +679,45 @@ struct AddDocumentView: View {
     private var processingView: some View {
         ZStack {
             Color(uiColor: .systemBackground).ignoresSafeArea()
-            VStack(spacing: 24) {
+            VStack(spacing: 28) {
+                Spacer()
+
+                Image(systemName: "sparkles")
+                    .font(.system(size: 56))
+                    .foregroundStyle(.tint)
+                    .symbolEffect(.variableColor.iterative.dimInactiveLayers)
+
+                VStack(spacing: 8) {
+                    Text("Reading your document…")
+                        .font(.title3.weight(.semibold))
+                    Text(processingSubtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.opacity)
+                        .animation(.easeInOut(duration: 0.3), value: processingSubtitle)
+                }
+
                 ProgressView()
-                    .scaleEffect(1.5)
-                    .padding(.bottom, 4)
-                Text("Reading your document…")
-                    .font(.title3.weight(.semibold))
-                Text(processingSubtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .contentTransition(.opacity)
-                    .animation(.easeInOut(duration: 0.3), value: processingSubtitle)
+                    .padding(.top, 4)
+
+                Spacer()
+
+                Button("Cancel") {
+                    ocrTask?.cancel()
+                    capturedImages = []
+                    withAnimation(.easeInOut(duration: 0.35)) { stage = .capture }
+                }
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 32)
             }
+            .padding(.horizontal, 32)
         }
-        .task {
-            await runOCRThenTransition()
+        .onAppear {
+            ocrTask = Task { await runOCRThenTransition() }
+        }
+        .onDisappear {
+            // Clean up if navigated away externally
+            ocrTask = nil
         }
     }
 
@@ -725,6 +816,7 @@ struct AddDocumentView: View {
 
         var structureHints: [OCRService.StructureHint] = []
         for (index, image) in images.prefix(2).enumerated() {
+            guard !Task.isCancelled else { return }
             let suggestions = await OCRService.extractSuggestions(from: image)
             structureHints.append(suggestions.structureHint)
 
@@ -755,13 +847,14 @@ struct AddDocumentView: View {
     private func runOCRThenTransition() async {
         processingSubtitle = "Detecting text…"
         await runOCR(on: capturedImages)
+        guard !Task.isCancelled else { return }
         processingSubtitle = "Analyzing fields…"
         autoApplySuggestions()
         buildSmartDocumentName()
         if selectedType.requiresFrontBack && capturedImages.count < 2 {
             showBackSidePrompt = true
         }
-        stage = .review
+        withAnimation(.easeInOut(duration: 0.35)) { stage = .review }
     }
 
     private func autoApplySuggestions() {
@@ -916,6 +1009,16 @@ struct AddDocumentView: View {
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
+    }
+
+    /// Non-interactive badge shown on fields that were auto-filled by OCR/AI.
+    private var aiFillBadge: some View {
+        Label("AI", systemImage: "sparkles")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.tint.opacity(0.85))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(.tint.opacity(0.08), in: Capsule())
     }
 
     // MARK: - Load Existing Page Thumbnails

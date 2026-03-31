@@ -4,9 +4,8 @@ import UniformTypeIdentifiers
 /// Full-screen first step of the scan-first onboarding flow.
 ///
 /// Shows capture options (camera, photos, files) immediately when a new document
-/// is created. Once the user has captured one or more images, a Continue button
-/// appears and a thumbnail strip is shown. Tapping Continue passes the images
-/// back to the parent via `onImagesReady`, which transitions to the processing stage.
+/// is created. For front/back document types, guides the user through two captures
+/// before advancing. Tapping Continue passes images to `onImagesReady`.
 struct DocumentCaptureStageView: View {
 
     let selectedType: DocumentType
@@ -25,6 +24,11 @@ struct DocumentCaptureStageView: View {
 
     private var needsFrontBack: Bool { selectedType.requiresFrontBack }
 
+    /// True when front is captured but we're still waiting for the back side.
+    private var awaitingBack: Bool {
+        needsFrontBack && capturedImages.count == 1
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -38,6 +42,8 @@ struct DocumentCaptureStageView: View {
 
                 if capturedImages.isEmpty {
                     emptyStateView
+                } else if awaitingBack {
+                    backSidePromptView
                 } else {
                     capturedStateView
                 }
@@ -47,6 +53,7 @@ struct DocumentCaptureStageView: View {
                 bottomActions
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: capturedImages.count)
         .sheet(isPresented: $showingScanner) {
             ScannerWrapperView(
                 onCompletion: { images in
@@ -137,7 +144,7 @@ struct DocumentCaptureStageView: View {
                     .background(.thinMaterial, in: Circle())
             }
             Spacer()
-            Text(capturedImages.isEmpty ? "Scan Document" : "Review Scans")
+            Text(headerTitle)
                 .font(.headline)
             Spacer()
             // Balance the × button
@@ -145,6 +152,12 @@ struct DocumentCaptureStageView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
+    }
+
+    private var headerTitle: String {
+        if capturedImages.isEmpty { return "Scan Document" }
+        if awaitingBack { return "Scan Back Side" }
+        return "Review Scans"
     }
 
     // MARK: - Empty state
@@ -170,7 +183,52 @@ struct DocumentCaptureStageView: View {
         .padding(.horizontal, 32)
     }
 
-    // MARK: - Captured state
+    // MARK: - Back-side prompt (after front is captured)
+
+    private var backSidePromptView: some View {
+        VStack(spacing: 24) {
+            // Front thumbnail
+            if let frontImage = capturedImages.first {
+                ZStack(alignment: .topTrailing) {
+                    Image(uiImage: frontImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 160, height: 110)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(.green.opacity(0.7), lineWidth: 2)
+                        )
+
+                    Label("Front", systemImage: "checkmark.circle.fill")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(.green, in: Capsule())
+                        .padding(8)
+                }
+            }
+
+            VStack(spacing: 8) {
+                Text("Now scan the back")
+                    .font(.title3.weight(.semibold))
+                Text("Flip the card and scan the other side.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            Button("Skip — front only") {
+                onImagesReady(capturedImages)
+            }
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 32)
+    }
+
+    // MARK: - Captured state (≥2 images or non-front/back type)
 
     private var capturedStateView: some View {
         VStack(spacing: 16) {
@@ -218,7 +276,7 @@ struct DocumentCaptureStageView: View {
                             Image(systemName: "plus")
                                 .font(.title2)
                                 .foregroundStyle(.secondary)
-                            Text(needsFrontBack && capturedImages.count == 1 ? "Add Back" : "Add More")
+                            Text("Add More")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -249,7 +307,8 @@ struct DocumentCaptureStageView: View {
 
     private var bottomActions: some View {
         VStack(spacing: 12) {
-            if !capturedImages.isEmpty {
+            // Continue button — shown when ready to advance
+            if !capturedImages.isEmpty && !awaitingBack {
                 Button {
                     onImagesReady(capturedImages)
                 } label: {
@@ -262,9 +321,25 @@ struct DocumentCaptureStageView: View {
                 .padding(.horizontal, 24)
             }
 
-            HStack(spacing: 12) {
-                captureOptionButton("Scan", icon: "camera.viewfinder") {
+            // Scan back button — shown prominently when awaiting back side
+            if awaitingBack {
+                Button {
                     showingScanner = true
+                } label: {
+                    Label("Scan Back Side", systemImage: "camera.viewfinder")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal, 24)
+            }
+
+            HStack(spacing: 12) {
+                if !awaitingBack {
+                    captureOptionButton("Scan", icon: "camera.viewfinder") {
+                        showingScanner = true
+                    }
                 }
                 captureOptionButton("Photos", icon: "photo.on.rectangle") {
                     showingPhotoPicker = true
