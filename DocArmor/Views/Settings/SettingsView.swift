@@ -111,6 +111,8 @@ struct SettingsView: View {
     @AppStorage("smartPack.customTypes") private var legacyCustomPackRawTypes =
         DocumentType.encodePackSelection([.passport, .driversLicense, .insuranceHealth])
     @State private var customPacks: [SavedCustomPack] = []
+    @State private var foundationModelStatus: FoundationModelAvailabilityService.Status = .unavailable(.frameworkUnavailable)
+    @State private var vaultKeyExists: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -228,8 +230,8 @@ struct SettingsView: View {
                 Section("Security Status") {
                     statusRow(
                         title: "Vault Key",
-                        systemImage: VaultKey.exists ? "checkmark.shield.fill" : "exclamationmark.shield.fill",
-                        value: VaultKey.exists ? "Stored in Keychain" : "Not provisioned"
+                        systemImage: vaultKeyExists ? "checkmark.shield.fill" : "exclamationmark.shield.fill",
+                        value: vaultKeyExists ? "Stored in Keychain" : "Not provisioned"
                     )
 
                     statusRow(
@@ -601,6 +603,8 @@ struct SettingsView: View {
             }
             .task {
                 migrateLegacyCustomPacksIfNeeded()
+                vaultKeyExists = VaultKey.exists
+                foundationModelStatus = FoundationModelAvailabilityService.currentStatus
             }
         }
     }
@@ -764,7 +768,7 @@ struct SettingsView: View {
     }
 
     private var foundationModelStatusText: String {
-        switch FoundationModelAvailabilityService.currentStatus {
+        switch foundationModelStatus {
         case .available:
             return "Available"
         case .unavailable:
@@ -773,7 +777,7 @@ struct SettingsView: View {
     }
 
     private var foundationModelStatusSystemImage: String {
-        switch FoundationModelAvailabilityService.currentStatus {
+        switch foundationModelStatus {
         case .available:
             return "sparkles.rectangle.stack.fill"
         case .unavailable:
@@ -782,7 +786,8 @@ struct SettingsView: View {
     }
 
     private var foundationModelFallbackDescription: String? {
-        FoundationModelAvailabilityService.fallbackReason?.userFacingDescription
+        guard case let .unavailable(reason) = foundationModelStatus else { return nil }
+        return reason.userFacingDescription
     }
 
     private func statusRow(title: String, systemImage: String, value: String) -> some View {

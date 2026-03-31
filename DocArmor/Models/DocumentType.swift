@@ -135,7 +135,7 @@ enum DocumentType: String, CaseIterable, Codable, Hashable {
         case .hotelLoyalty:          return "bed.double.fill"
         case .airlineMembership:     return "airplane"
         case .rentalCarMembership:   return "key.fill"
-        case .employeeID:            return "person.badge.fill"
+        case .employeeID:            return "person.badge.key.fill"
         case .professionalLicense:   return "rosette"
         case .custom:                return "doc.fill"
         }

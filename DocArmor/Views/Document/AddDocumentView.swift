@@ -80,6 +80,7 @@ struct AddDocumentView: View {
     @State private var householdProfiles = HouseholdStore.loadProfiles()
     @State private var pendingInboxItems: [PendingImportItem] = ImportInboxService.pendingItems()
     @State private var hasAppliedInitialImport = false
+    @State private var cropImageIndex: Int? = nil
 
     private var isEditing: Bool { editingDocument != nil }
 
@@ -115,8 +116,32 @@ struct AddDocumentView: View {
                         }
                     }
 
+                    Picker(selection: $selectedCategory) {
+                        ForEach(DocumentCategory.allCases, id: \.self) { cat in
+                            Label(cat.rawValue, systemImage: cat.systemImage).tag(cat)
+                        }
+                    } label: {
+                        Label("Category", systemImage: selectedCategory.systemImage)
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: selectedCategory) { _, newCategory in
+                        // Reset type to first valid option for the new category if needed
+                        if selectedType.defaultCategory != newCategory {
+                            let validTypes = DocumentType.allCases.filter { $0.defaultCategory == newCategory }
+                            selectedType = validTypes.first ?? .custom
+                            updatePageLabels()
+                        }
+                    }
+
+                    if let suggestedCategory, suggestedType == nil, suggestedCategory != selectedCategory {
+                        suggestionChip(label: "Use \(suggestedCategory.rawValue)") {
+                            selectedCategory = suggestedCategory
+                            self.suggestedCategory = nil
+                        }
+                    }
+
                     Picker(selection: $selectedType) {
-                        ForEach(DocumentType.allCases, id: \.self) { type in
+                        ForEach(typesForSelectedCategory, id: \.self) { type in
                             Label(type.rawValue, systemImage: type.systemImage).tag(type)
                         }
                     } label: {
@@ -124,7 +149,6 @@ struct AddDocumentView: View {
                     }
                     .pickerStyle(.menu)
                     .onChange(of: selectedType) { _, newType in
-                        selectedCategory = newType.defaultCategory
                         updatePageLabels()
                     }
 
@@ -135,22 +159,6 @@ struct AddDocumentView: View {
                             self.suggestedType = nil
                             self.suggestedCategory = nil
                             updatePageLabels()
-                        }
-                    }
-
-                    Picker(selection: $selectedCategory) {
-                        ForEach(DocumentCategory.allCases, id: \.self) { cat in
-                            Label(cat.rawValue, systemImage: cat.systemImage).tag(cat)
-                        }
-                    } label: {
-                        Label("Category", systemImage: selectedCategory.systemImage)
-                    }
-                    .pickerStyle(.menu)
-
-                    if let suggestedCategory, suggestedType == nil, suggestedCategory != selectedCategory {
-                        suggestionChip(label: "Use \(suggestedCategory.rawValue)") {
-                            selectedCategory = suggestedCategory
-                            self.suggestedCategory = nil
                         }
                     }
                 }
@@ -257,15 +265,27 @@ struct AddDocumentView: View {
                                 HStack(spacing: 12) {
                                     ForEach(capturedImages.indices, id: \.self) { i in
                                         VStack(spacing: 4) {
-                                            Image(uiImage: capturedImages[i])
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: 80, height: 60)
-                                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 8)
-                                                        .stroke(.tint.opacity(0.6), lineWidth: 2)
-                                                )
+                                            ZStack(alignment: .topTrailing) {
+                                                Image(uiImage: capturedImages[i])
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 80, height: 60)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 8)
+                                                            .stroke(.tint.opacity(0.6), lineWidth: 2)
+                                                    )
+                                                Button {
+                                                    cropImageIndex = i
+                                                } label: {
+                                                    Image(systemName: "crop")
+                                                        .font(.caption2.bold())
+                                                        .padding(4)
+                                                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 4))
+                                                }
+                                                .buttonStyle(.plain)
+                                                .padding(4)
+                                            }
                                             Text("New")
                                                 .font(.caption2)
                                                 .foregroundStyle(.tint)
@@ -334,15 +354,27 @@ struct AddDocumentView: View {
                                 HStack(spacing: 12) {
                                     ForEach(capturedImages.indices, id: \.self) { i in
                                         VStack(spacing: 4) {
-                                            Image(uiImage: capturedImages[i])
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: 80, height: 60)
-                                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 8)
-                                                        .stroke(.separator, lineWidth: 1)
-                                                )
+                                            ZStack(alignment: .topTrailing) {
+                                                Image(uiImage: capturedImages[i])
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 80, height: 60)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 8)
+                                                            .stroke(.separator, lineWidth: 1)
+                                                    )
+                                                Button {
+                                                    cropImageIndex = i
+                                                } label: {
+                                                    Image(systemName: "crop")
+                                                        .font(.caption2.bold())
+                                                        .padding(4)
+                                                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 4))
+                                                }
+                                                .buttonStyle(.plain)
+                                                .padding(4)
+                                            }
                                             if i < pageLabels.count {
                                                 Text(pageLabels[i])
                                                     .font(.caption2)
@@ -448,6 +480,22 @@ struct AddDocumentView: View {
                     importError = error.localizedDescription
                 }
             }
+            .fullScreenCover(isPresented: Binding(
+                get: { cropImageIndex != nil },
+                set: { if !$0 { cropImageIndex = nil } }
+            )) {
+                if let index = cropImageIndex, capturedImages.indices.contains(index) {
+                    ImageCropView(
+                        image: capturedImages[index],
+                        documentType: selectedType
+                    ) { cropped in
+                        capturedImages[index] = cropped
+                        cropImageIndex = nil
+                    } onCancel: {
+                        cropImageIndex = nil
+                    }
+                }
+            }
             .onAppear {
                 householdProfiles = HouseholdStore.loadProfiles()
                 refreshPendingInboxItems()
@@ -528,6 +576,16 @@ struct AddDocumentView: View {
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
         (isEditing || !capturedImages.isEmpty)
+    }
+
+    private var typesForSelectedCategory: [DocumentType] {
+        let filtered = DocumentType.allCases.filter { $0.defaultCategory == selectedCategory }
+        guard !filtered.isEmpty else { return DocumentType.allCases }
+        // Always keep the current selection visible even if the category was overridden
+        if !filtered.contains(selectedType) {
+            return [selectedType] + filtered
+        }
+        return filtered
     }
 
     private var availableHouseholdMembers: [String] {
@@ -801,6 +859,7 @@ struct AddDocumentView: View {
                     try? ImportInboxService.consume(item)
                 }
             }
+            try modelContext.save()
             isSaving = false
             dismiss()
         } catch {
