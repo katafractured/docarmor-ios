@@ -80,6 +80,20 @@ enum HouseholdStore {
         loadProfiles().map(\.name)
     }
 
+    nonisolated static func primaryMemberName(from profiles: [HouseholdMemberProfile]? = nil) -> String? {
+        let profiles = profiles ?? loadProfiles()
+
+        if let me = profiles.first(where: { $0.name.localizedCaseInsensitiveCompare("Me") == .orderedSame }) {
+            return me.name
+        }
+
+        if let adult = profiles.first(where: { $0.role == .adult }) {
+            return adult.name
+        }
+
+        return profiles.first?.name
+    }
+
     nonisolated static func saveMembers(_ members: [String]) {
         saveProfiles(sanitize(members).map { HouseholdMemberProfile(name: $0, role: defaultRole(for: $0)) })
     }
@@ -168,13 +182,26 @@ enum HouseholdStore {
             partialResult[normalized] = HouseholdMemberProfile(name: normalized, role: profile.role)
         }
         let fallback = deduped.isEmpty ? ["Me": HouseholdMemberProfile(name: "Me", role: .adult)] : deduped
-        return fallback.values.sorted { lhs, rhs in
-            lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
-        }
+        return fallback.values.sorted(by: profileSort)
     }
 
     nonisolated private static func sanitize(_ members: [String]) -> [String] {
         Array(Set(members.compactMap(normalize(_:))))
-            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            .sorted(by: memberSort)
+    }
+
+    nonisolated private static func profileSort(_ lhs: HouseholdMemberProfile, _ rhs: HouseholdMemberProfile) -> Bool {
+        memberSort(lhs.name, rhs.name)
+    }
+
+    nonisolated private static func memberSort(_ lhs: String, _ rhs: String) -> Bool {
+        let lhsIsMe = lhs.localizedCaseInsensitiveCompare("Me") == .orderedSame
+        let rhsIsMe = rhs.localizedCaseInsensitiveCompare("Me") == .orderedSame
+
+        if lhsIsMe != rhsIsMe {
+            return lhsIsMe
+        }
+
+        return lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
     }
 }

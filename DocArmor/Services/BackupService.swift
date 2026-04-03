@@ -167,7 +167,7 @@ enum BackupService {
         try modelContext.save()
     }
 
-    static func defaultFilename() -> String {
+    nonisolated static func defaultFilename() -> String {
         let timestamp = Date.now.formatted(.iso8601.year().month().day())
         return "DocArmor-Backup-\(timestamp).docarmorbackup"
     }

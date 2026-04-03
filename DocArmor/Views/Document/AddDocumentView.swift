@@ -10,6 +10,20 @@ struct AddDocumentView: View {
         case replaceExisting(Document)
     }
 
+    private enum DocumentSaveError: LocalizedError {
+        case noPagesToSave
+        case invalidCapturedImage(Int)
+
+        var errorDescription: String? {
+            switch self {
+            case .noPagesToSave:
+                return "Add at least one page before saving."
+            case .invalidCapturedImage(let index):
+                return "Page \(index + 1) could not be prepared for secure storage."
+            }
+        }
+    }
+
     private struct DuplicateMatch: Identifiable {
         let document: Document
         let summary: String
@@ -634,7 +648,7 @@ struct AddDocumentView: View {
                     applyInitialImportIfNeeded()
                     Task { await loadExistingPageThumbnails() }
                 } else {
-                    selectedOwnerName = availableHouseholdMembers.first
+                    selectedOwnerName = HouseholdStore.primaryMemberName(from: householdProfiles)
                     updatePageLabels()
                     applyInitialImportIfNeeded()
                 }
@@ -757,8 +771,11 @@ struct AddDocumentView: View {
         if let selectedOwnerName, !members.contains(selectedOwnerName) {
             members.append(selectedOwnerName)
         }
-        return members.sorted {
-            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+        let primaryMemberName = HouseholdStore.primaryMemberName(from: householdProfiles)
+        return members.sorted { lhs, rhs in
+            if lhs == primaryMemberName { return true }
+            if rhs == primaryMemberName { return false }
+            return lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
         }
     }
 
@@ -1071,6 +1088,10 @@ struct AddDocumentView: View {
         do {
             let key = try VaultKey.load()
 
+            if editingDocument == nil && modeRequiresPages(mode) && capturedImages.isEmpty {
+                throw DocumentSaveError.noPagesToSave
+            }
+
             if let doc = editingDocument {
                 // Update existing document metadata
                 applyFormMetadata(to: doc)
@@ -1240,12 +1261,14 @@ struct AddDocumentView: View {
 
     private func addCapturedPages(to document: Document, startingAt startIndex: Int, using key: SymmetricKey) async throws {
         for (offset, image) in capturedImages.enumerated() {
-            let jpegData = image.jpegData(compressionQuality: 0.85) ?? Data()
+            let pageIndex = startIndex + offset
+            let jpegData = try await Task.detached(priority: .userInitiated) {
+                try Self.prepareImageDataForStorage(image, pageIndex: pageIndex)
+            }.value
             let (encrypted, nonce) = try await Task.detached(priority: .userInitiated) {
                 try EncryptionService.encrypt(jpegData, using: key)
             }.value
 
-            let labelIndex = startIndex + offset
             let label: String?
             if offset < pageLabels.count {
                 label = pageLabels[offset].isEmpty ? nil : pageLabels[offset]
@@ -1254,13 +1277,50 @@ struct AddDocumentView: View {
             }
 
             let page = DocumentPage(
-                pageIndex: labelIndex,
+                pageIndex: pageIndex,
                 encryptedImageData: encrypted,
                 nonce: nonce,
                 label: label
             )
             page.document = document
             modelContext.insert(page)
+        }
+    }
+
+    private func modeRequiresPages(_ mode: SaveMode) -> Bool {
+        switch mode {
+        case .normal, .appendToExisting, .replaceExisting:
+            return true
+        }
+    }
+
+    nonisolated private static func prepareImageDataForStorage(_ image: UIImage, pageIndex: Int) throws -> Data {
+        try autoreleasepool {
+            let maxDimension: CGFloat = 2400
+            let originalSize = image.size
+            let largestSide = max(originalSize.width, originalSize.height)
+
+            let outputImage: UIImage
+            if largestSide > maxDimension {
+                let scale = maxDimension / largestSide
+                let targetSize = CGSize(
+                    width: max(1, floor(originalSize.width * scale)),
+                    height: max(1, floor(originalSize.height * scale))
+                )
+                let format = UIGraphicsImageRendererFormat.default()
+                format.scale = 1
+                outputImage = UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
+                    image.draw(in: CGRect(origin: .zero, size: targetSize))
+                }
+            } else {
+                outputImage = image
+            }
+
+            guard let jpegData = outputImage.jpegData(compressionQuality: 0.82), !jpegData.isEmpty else {
+                throw DocumentSaveError.invalidCapturedImage(pageIndex)
+            }
+
+            return jpegData
         }
     }
 

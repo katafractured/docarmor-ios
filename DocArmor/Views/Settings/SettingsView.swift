@@ -4,6 +4,10 @@ import LocalAuthentication
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
+    private enum FocusedField: Hashable {
+        case newMemberName
+    }
+
     enum BackupOperation: String, Identifiable {
         case export
         case restore
@@ -114,6 +118,7 @@ struct SettingsView: View {
     @State private var foundationModelStatus: FoundationModelAvailabilityService.Status = .unavailable(.frameworkUnavailable)
     @State private var vaultKeyExists: Bool = false
     @State private var hasLoadedInitialState = false
+    @FocusState private var focusedField: FocusedField?
 
     // Cached derived state — recomputed only when inputs change, not on every render
     @State private var cachedPackRecommendations: [LocalIntelligenceRecommendationService.PackRecommendation] = []
@@ -213,6 +218,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         TextField("Add family member", text: $newMemberName)
                             .autocorrectionDisabled()
+                            .focused($focusedField, equals: .newMemberName)
 
                         Picker("New member role", selection: $newMemberRole) {
                             ForEach(HouseholdRole.allCases) { role in
@@ -225,6 +231,7 @@ struct SettingsView: View {
                             addHouseholdMember()
                             newMemberName = ""
                             newMemberRole = .adult
+                            focusedField = nil
                         }
                         .disabled(HouseholdStore.normalize(newMemberName) == nil)
                     }
@@ -542,6 +549,12 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                 }
             }
+            .scrollDismissesKeyboard(.immediately)
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    focusedField = nil
+                }
+            )
             .navigationTitle("Settings")
             .alert("Reset Vault?", isPresented: $showingResetAlert) {
                 Button("Reset Everything", role: .destructive) {
@@ -615,15 +628,12 @@ struct SettingsView: View {
                 async let profiles: [HouseholdMemberProfile] = Task.detached(priority: .userInitiated) {
                     HouseholdStore.loadProfiles()
                 }.value
-                async let card: EmergencyCardData = Task.detached(priority: .userInitiated) {
-                    EmergencyCardStore.load()
-                }.value
                 async let defaultBackupFilename: String = Task.detached(priority: .utility) {
                     BackupService.defaultFilename()
                 }.value
 
                 householdProfiles = await profiles
-                emergencyCard = await card
+                emergencyCard = EmergencyCardStore.load()
                 backupFilename = await defaultBackupFilename
 
                 migrateLegacyCustomPacksIfNeeded()

@@ -30,7 +30,9 @@ enum DocumentImportNormalizationService {
         var suggestedName: String?
 
         for (index, url) in urls.enumerated() {
-            let fileImages = try normalize(url: url)
+            let fileImages = try withScopedAccess(to: url) {
+                try normalize(url: url)
+            }
             images.append(contentsOf: fileImages)
 
             if index == 0 {
@@ -63,7 +65,9 @@ enum DocumentImportNormalizationService {
     }
 
     static func previewImage(for url: URL) -> UIImage? {
-        (try? normalize(url: url))?.first
+        (try? withScopedAccess(to: url) {
+            try normalize(url: url)
+        })?.first
     }
 
     nonisolated private static func inferredType(for url: URL) -> UTType? {
@@ -112,5 +116,15 @@ enum DocumentImportNormalizationService {
             .replacingOccurrences(of: "-", with: " ")
             .replacingOccurrences(of: "_", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func withScopedAccess<T>(to url: URL, perform: () throws -> T) throws -> T {
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        return try perform()
     }
 }
