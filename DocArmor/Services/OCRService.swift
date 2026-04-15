@@ -70,10 +70,19 @@ enum OCRService {
     }
 
     /// Runs on-device text recognition plus barcode scanning on `image`.
+    ///
+    /// Vision's `VNImageRequestHandler.perform` is a synchronous blocking call
+    /// that takes multiple seconds on detailed documents (passports, IDs).
+    /// It MUST run off the main thread — callers are typically in SwiftUI
+    /// `.task {}` blocks which inherit MainActor, and a scene-update watchdog
+    /// will kill the app after 10 seconds. We use `Task.detached` to guarantee
+    /// the Vision work runs on a background executor.
     nonisolated static func extractSuggestions(from image: UIImage) async -> Suggestions {
         guard let cgImage = image.cgImage else { return Suggestions() }
+        let imageSize = image.size
 
-        return await withCheckedContinuation { continuation in
+        let (lines, barcodePayloads) = await Task.detached(priority: .userInitiated) {
+            () -> ([String], [String]) in
             let textRequest = VNRecognizeTextRequest()
             textRequest.recognitionLevel = .accurate
             textRequest.usesLanguageCorrection = true
@@ -94,22 +103,26 @@ enum OCRService {
                 .compactMap { $0.topCandidates(1).first?.string }
             let barcodePayloads = (barcodeRequest.results ?? [])
                 .compactMap(\.payloadStringValue)
+            return (lines, barcodePayloads)
+        }.value
 
         let baseSuggestions = parse(
             lines,
             barcodePayloads: barcodePayloads,
-            imageSize: image.size
-            )
+            imageSize: imageSize
+        )
 
-            Task {
-                let refined = await FoundationModelExtractionService.refine(
-                    lines: lines,
-                    barcodePayloads: barcodePayloads,
-                    fallback: baseSuggestions
-                )
-                continuation.resume(returning: refined)
-            }
-        }
+        // Refine via FoundationModels if available. On iOS 26 the first access
+        // to SystemLanguageModel.default is a synchronous blocking init — run
+        // it off the main thread. On iOS 17/18 this short-circuits to the
+        // deterministic fallback so the detached hop is cheap.
+        return await Task.detached(priority: .userInitiated) {
+            await FoundationModelExtractionService.refine(
+                lines: lines,
+                barcodePayloads: barcodePayloads,
+                fallback: baseSuggestions
+            )
+        }.value
     }
 
     // MARK: - Parsing
