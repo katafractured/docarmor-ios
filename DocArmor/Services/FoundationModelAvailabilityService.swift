@@ -1,7 +1,7 @@
 import Foundation
 
 #if canImport(FoundationModels)
-import FoundationModels
+@_weakLinked import FoundationModels
 #endif
 
 enum FoundationModelAvailabilityService {

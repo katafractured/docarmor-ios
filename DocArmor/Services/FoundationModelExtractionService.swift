@@ -1,7 +1,7 @@
 import Foundation
 
 #if canImport(FoundationModels)
-import FoundationModels
+@_weakLinked import FoundationModels
 #endif
 
 enum FoundationModelExtractionService {
@@ -56,6 +56,21 @@ enum FoundationModelExtractionService {
         """
     }
 
+    private static func cleaned(_ value: String) -> String? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func parsedDate(_ value: String) -> Date? {
+        guard let text = cleaned(value) else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.date(from: text)
+    }
+
+    #if canImport(FoundationModels)
+    @available(iOS 26.0, *)
     private static func merge(
         generated: GeneratedDocumentFields,
         into fallback: OCRService.Suggestions
@@ -73,19 +88,7 @@ enum FoundationModelExtractionService {
         )
     }
 
-    private static func cleaned(_ value: String) -> String? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
-    }
-
-    private static func parsedDate(_ value: String) -> Date? {
-        guard let text = cleaned(value) else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        return formatter.date(from: text)
-    }
-
+    @available(iOS 26.0, *)
     private static func structureHint(from value: GeneratedStructureHint) -> OCRService.StructureHint? {
         switch value {
         case .front:
@@ -96,6 +99,7 @@ enum FoundationModelExtractionService {
             return .unclear
         }
     }
+    #endif
 }
 
 #if canImport(FoundationModels)
