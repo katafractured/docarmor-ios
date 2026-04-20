@@ -157,13 +157,13 @@ final class EntitlementService {
             if case .verified(let txn) = result,
                txn.productID == ProductID.unlock,
                txn.revocationDate == nil {
-                newPlan = max(newPlan, .unlocked)
+                newPlan = Self.max(newPlan, .unlocked)
             }
         }
 
         // Shared App Group: Sovereign from Vaultyx
         if hasSovereignEntitlement {
-            newPlan = max(newPlan, .sovereign)
+            newPlan = Self.max(newPlan, .sovereign)
         }
 
         currentPlan = newPlan
