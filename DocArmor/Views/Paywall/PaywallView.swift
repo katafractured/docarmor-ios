@@ -37,9 +37,10 @@ enum PaywallReason {
     var isSovereignOnly: Bool { self == .cloudBackup }
 }
 
-/// Two paths to unlock:
-///   1. One-time DocArmor unlock IAP ($12.99) — full local features.
-///   2. Sovereign subscription (sold in Vaultyx) — local features + cloud backup.
+/// Three paths to unlock:
+///   1. One-time DocArmor unlock IAP ($7.99) — full local features.
+///   2. Enclave/Sovereign/Founder bundle token (via shared App Group) — full local features.
+///   3. Sovereign subscription (sold in Vaultyx) — local features + cloud backup.
 ///
 /// Cloud Backup reason shows only path #2 (Sovereign).
 struct PaywallView: View {
@@ -137,7 +138,7 @@ struct PaywallView: View {
                         .foregroundStyle(Color.white.opacity(0.7))
                 }
                 Spacer()
-                Text(entitlementService.unlockProduct?.displayPrice ?? "$12.99")
+                Text(entitlementService.unlockProduct?.displayPrice ?? "$7.99")
                     .font(.title3.bold())
                     .foregroundStyle(.white)
             }
@@ -161,7 +162,7 @@ struct PaywallView: View {
                         ProgressView().tint(Color.kataNavy)
                     } else {
                         Image(systemName: "lock.open.fill")
-                        Text("Unlock for \(entitlementService.unlockProduct?.displayPrice ?? "$12.99")")
+                        Text("Unlock for \(entitlementService.unlockProduct?.displayPrice ?? "$7.99")")
                             .font(.headline)
                     }
                 }

@@ -147,10 +147,15 @@ final class EntitlementService {
         await refreshEntitlements()
     }
 
-    /// Reconcile state across (a) current StoreKit entitlements and (b) the
-    /// Enclave shared App Group. Highest wins.
+    /// Reconcile state across (a) current StoreKit entitlements, (b) the
+    /// Enclave shared App Group, and (c) platform bundle-unlock. Highest wins.
     func refreshEntitlements() async {
         var newPlan: Plan = .locked
+
+        // Check platform bundle-unlock first (Enclave/Sovereign token)
+        if PlatformEntitlement.isPlatformUnlocked {
+            newPlan = Self.max(newPlan, .unlocked)
+        }
 
         // StoreKit: look for the non-consumable unlock
         for await result in Transaction.currentEntitlements {
