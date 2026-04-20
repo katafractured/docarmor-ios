@@ -1,372 +1,273 @@
 import SwiftUI
 import StoreKit
 
+/// Why the user landed on the paywall. Tunes the headline copy.
 enum PaywallReason {
-    case presentMode, travelMode, smartPacks, household, familyVault
+    case presentMode, travelMode, smartPacks, household, familyVault, cloudBackup
 
-    var title: String {
-        "Upgrade DocArmor"
-    }
-
-    var subtitle: String {
+    var headline: String {
         switch self {
-        case .presentMode:
-            "Present Mode gives you full brightness and landscape view to show documents to airport agents, hotel staff, and more."
-        case .travelMode:
-            "Travel Mode is a Pro feature — keep all your travel documents ready in one tap."
-        case .smartPacks:
-            "Smart Packs organize documents by life event. Create unlimited packs with Pro."
-        case .household:
-            "Manage household members and organize documents per person with Pro."
-        case .familyVault:
-            "Family Vault lets you securely share documents and manage household access across family devices."
+        case .presentMode:  "Present Mode"
+        case .travelMode:   "Travel Mode"
+        case .smartPacks:   "Smart Packs"
+        case .household:    "Household"
+        case .familyVault:  "Family Vault"
+        case .cloudBackup:  "Cloud Backup"
         }
     }
+
+    var subhead: String {
+        switch self {
+        case .presentMode:
+            "Hand the phone to an agent with your passport full-screen, bright, and landscape-locked. No scrolling, no camera roll fumbling."
+        case .travelMode:
+            "Pull every travel document — passports, boarding passes, vaccine cards — into one ready-to-present space."
+        case .smartPacks:
+            "Organize documents by the moment you'll need them: Travel, Roadside, Medical, School, Family Emergency."
+        case .household:
+            "Track every family member's documents and see at a glance who's missing what."
+        case .familyVault:
+            "Each person in the household gets their own organized vault, all encrypted together."
+        case .cloudBackup:
+            "Keep an encrypted backup of your vault in Katafract Shards and sync across every device."
+        }
+    }
+
+    /// Cloud backup is Sovereign-only — no one-time unlock path.
+    var isSovereignOnly: Bool { self == .cloudBackup }
 }
 
+/// Two paths to unlock:
+///   1. One-time DocArmor unlock IAP ($12.99) — full local features.
+///   2. Sovereign subscription (sold in Vaultyx) — local features + cloud backup.
+///
+/// Cloud Backup reason shows only path #2 (Sovereign).
 struct PaywallView: View {
     let reason: PaywallReason
     let entitlementService: EntitlementService
     let dismiss: () -> Void
 
-    @State private var purchaseError: String?
+    @Environment(\.openURL) private var openURL
     @State private var showingError = false
-    @State private var selectedProductID: String?
-    @State private var proMonthlyProduct: Product?
-    @State private var proAnnualProduct: Product?
-    @State private var familyMonthlyProduct: Product?
-    @State private var familyAnnualProduct: Product?
-    @State private var showProAnnual = false
-    @State private var showFamilyAnnual = false
+
+    /// Vaultyx App Store URL — where Sovereign is sold.
+    private static let vaultyxAppStoreURL = URL(string: "https://apps.apple.com/app/id6762418528")!
 
     var body: some View {
         ZStack {
-            Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.08, green: 0.07, blue: 0.12, alpha: 1) : UIColor(red: 0.97, green: 0.96, blue: 0.99, alpha: 1) })
-                .ignoresSafeArea()
+            LinearGradient(
+                colors: [Color(red: 0.06, green: 0.12, blue: 0.26), Color(red: 0.02, green: 0.03, blue: 0.06)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: 24) {
+                Spacer()
+
                 // MARK: Header
-                VStack(spacing: 16) {
-                    Image(systemName: "shield.fill")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.orange)
+                VStack(spacing: 14) {
+                    Image(systemName: reason.isSovereignOnly ? "icloud.and.arrow.up.fill" : "lock.shield.fill")
+                        .font(.system(size: 52, weight: .semibold))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(Color.yellow.opacity(0.9), Color.white.opacity(0.9))
 
-                    VStack(spacing: 8) {
-                        Text(reason.title)
-                            .font(.title2.bold())
-                        Text(reason.subtitle)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(4)
-                    }
-                    .multilineTextAlignment(.center)
+                    Text(reason.headline)
+                        .font(.title.bold())
+                        .foregroundStyle(.white)
+
+                    Text(reason.subhead)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.white.opacity(0.82))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
                 }
-                .padding(24)
 
-                ScrollView {
-                    VStack(spacing: 12) {
-                        // Pro section
-                        if let proMonthly = proMonthlyProduct {
-                            VStack(spacing: 12) {
-                                // Pro Monthly
-                                proOptionCard(
-                                    product: proMonthly,
-                                    isSelected: selectedProductID == proMonthly.id
-                                ) {
-                                    selectedProductID = proMonthly.id
-                                    showProAnnual = false
-                                }
+                Spacer().frame(height: 4)
 
-                                // Pro Annual (toggle visibility)
-                                if let proAnnual = proAnnualProduct {
-                                    if showProAnnual {
-                                        proOptionCard(
-                                            product: proAnnual,
-                                            isSelected: selectedProductID == proAnnual.id,
-                                            isSavings: true,
-                                            savingsPercentage: 17
-                                        ) {
-                                            selectedProductID = proAnnual.id
-                                        }
-                                    }
-
-                                    Button(action: { showProAnnual.toggle() }) {
-                                        HStack {
-                                            Text(showProAnnual ? "Hide annual option" : "Show annual option (save 17%)")
-                                                .font(.caption.weight(.semibold))
-                                                .foregroundStyle(.orange)
-                                            Spacer()
-                                            Image(systemName: showProAnnual ? "chevron.up" : "chevron.down")
-                                                .foregroundStyle(.orange)
-                                        }
-                                        .padding(12)
-                                        .background(Color.orange.opacity(0.1))
-                                        .cornerRadius(8)
-                                    }
-                                }
-                            }
-                        }
-
-                        Divider()
-                            .padding(.vertical, 8)
-
-                        // Family section
-                        if let familyMonthly = familyMonthlyProduct {
-                            VStack(spacing: 12) {
-                                // Family Monthly
-                                familyOptionCard(
-                                    product: familyMonthly,
-                                    isSelected: selectedProductID == familyMonthly.id
-                                ) {
-                                    selectedProductID = familyMonthly.id
-                                    showFamilyAnnual = false
-                                }
-
-                                // Family Annual (toggle visibility)
-                                if let familyAnnual = familyAnnualProduct {
-                                    if showFamilyAnnual {
-                                        familyOptionCard(
-                                            product: familyAnnual,
-                                            isSelected: selectedProductID == familyAnnual.id,
-                                            isSavings: true,
-                                            savingsPercentage: 17
-                                        ) {
-                                            selectedProductID = familyAnnual.id
-                                        }
-                                    }
-
-                                    Button(action: { showFamilyAnnual.toggle() }) {
-                                        HStack {
-                                            Text(showFamilyAnnual ? "Hide annual option" : "Show annual option (save 17%)")
-                                                .font(.caption.weight(.semibold))
-                                                .foregroundStyle(.orange)
-                                            Spacer()
-                                            Image(systemName: showFamilyAnnual ? "chevron.up" : "chevron.down")
-                                                .foregroundStyle(.orange)
-                                        }
-                                        .padding(12)
-                                        .background(Color.orange.opacity(0.1))
-                                        .cornerRadius(8)
-                                    }
-                                }
-                            }
-                        }
+                // MARK: Two paths
+                VStack(spacing: 14) {
+                    if !reason.isSovereignOnly {
+                        unlockCard
                     }
-                    .padding(16)
+                    sovereignCard
                 }
+                .padding(.horizontal, 16)
+
+                Spacer()
 
                 // MARK: Footer
-                VStack(spacing: 12) {
-                    Button(action: purchaseSelected) {
-                        if entitlementService.isLoading {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                                .padding(12)
-                        } else {
-                            Text("Subscribe")
-                                .frame(maxWidth: .infinity)
-                                .font(.headline)
-                                .foregroundStyle(.white)
-                                .padding(12)
-                        }
+                VStack(spacing: 10) {
+                    Button {
+                        Task { await entitlementService.restorePurchases() }
+                    } label: {
+                        Text("Restore Purchases")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.white.opacity(0.9))
                     }
-                    .background(Color.orange)
-                    .cornerRadius(8)
-                    .disabled(entitlementService.isLoading || selectedProductID == nil)
-
-                    HStack(spacing: 12) {
-                        Button(action: restorePurchases) {
-                            Text("Restore Purchases")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.blue)
-                        }
-
-                        Divider()
-                            .frame(height: 16)
-
-                        Button(action: { print("Privacy Policy tapped") }) {
-                            Text("Privacy")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.blue)
-                        }
-
-                        Divider()
-                            .frame(height: 16)
-
-                        Button(action: { print("Terms tapped") }) {
-                            Text("Terms")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.blue)
-                        }
-                    }
-                    .padding(.horizontal, 16)
 
                     Button(action: dismiss) {
                         Text("Not now")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.white.opacity(0.55))
                     }
                 }
-                .padding(16)
+                .padding(.bottom, 20)
             }
         }
         .task {
-            await loadProducts()
+            await entitlementService.loadProduct()
         }
         .alert("Purchase Error", isPresented: $showingError) {
-            Button("OK") { }
+            Button("OK") { entitlementService.purchaseError = nil }
         } message: {
-            Text(purchaseError ?? "An unknown error occurred")
+            Text(entitlementService.purchaseError ?? "")
+        }
+        .onChange(of: entitlementService.purchaseError) { _, new in
+            showingError = new != nil
         }
     }
 
-    @ViewBuilder
-    private func proOptionCard(
-        product: Product,
-        isSelected: Bool,
-        isSavings: Bool = false,
-        savingsPercentage: Int = 0,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button { action() } label: {
-            HStack(spacing: 12) {
+    // MARK: - Option cards
+
+    private var unlockCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Pro")
+                    Text("Unlock DocArmor")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text("One-time · keep forever")
+                        .font(.caption)
+                        .foregroundStyle(Color.white.opacity(0.7))
+                }
+                Spacer()
+                Text(entitlementService.unlockProduct?.displayPrice ?? "$12.99")
+                    .font(.title3.bold())
+                    .foregroundStyle(.white)
+            }
+
+            bulletList([
+                "Present Mode, Travel Mode, Smart Packs",
+                "Custom Packs + Household members",
+                "OCR auto-fill + all scenario surfaces",
+                "Stays on-device — no account, no server",
+            ])
+
+            Button {
+                Task {
+                    if await entitlementService.purchaseUnlock() {
+                        dismiss()
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    if entitlementService.isLoading {
+                        ProgressView().tint(Color(red: 0.06, green: 0.12, blue: 0.26))
+                    } else {
+                        Image(systemName: "lock.open.fill")
+                        Text("Unlock for \(entitlementService.unlockProduct?.displayPrice ?? "$12.99")")
                             .font(.headline)
-                        Spacer()
-                        if isSavings {
-                            Text("Save \(savingsPercentage)%")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.orange)
-                                .padding(.vertical, 4)
-                                .padding(.horizontal, 8)
-                                .background(Color.orange.opacity(0.2))
-                                .cornerRadius(4)
-                        }
                     }
-                    Text("All Pro features")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(product.displayPrice)
-                        .font(.headline)
-                    Text(product.id.contains("monthly") ? "per month" : "per year")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? .orange : .secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .foregroundStyle(Color(red: 0.06, green: 0.12, blue: 0.26))
+                .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
             }
-            .padding(12)
-            .background(isSelected ? Color.orange.opacity(0.1) : Color(.secondarySystemGroupedBackground))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
-            )
+            .disabled(entitlementService.isLoading)
         }
+        .padding(16)
+        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.14), lineWidth: 1)
+        )
+    }
+
+    private var sovereignCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("Get Sovereign")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                        Text("BONUS")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Color(red: 0.06, green: 0.12, blue: 0.26))
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(Color.yellow.opacity(0.95), in: Capsule())
+                    }
+                    Text("$14.99/mo or $119.99/yr · bundled with Vaultyx")
+                        .font(.caption)
+                        .foregroundStyle(Color.white.opacity(0.7))
+                }
+                Spacer()
+            }
+
+            bulletList([
+                "Everything in the one-time unlock",
+                "Encrypted cloud backup of your vault",
+                "Cross-device sync — iPhone, iPad, Mac",
+                "Vaultyx 1 TB storage + Wraith VPN + Haven DNS",
+            ])
+
+            Button {
+                openURL(Self.vaultyxAppStoreURL)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                    Text("Get Sovereign in Vaultyx")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .foregroundStyle(Color(red: 0.06, green: 0.12, blue: 0.26))
+                .background(
+                    LinearGradient(colors: [Color.yellow.opacity(0.95), Color.orange.opacity(0.9)], startPoint: .leading, endPoint: .trailing),
+                    in: RoundedRectangle(cornerRadius: 12)
+                )
+            }
+
+            if !reason.isSovereignOnly {
+                Button {
+                    Task {
+                        await entitlementService.refreshEntitlements()
+                        if entitlementService.isSovereign { dismiss() }
+                    }
+                } label: {
+                    Text("Already subscribed? Refresh entitlement")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.white.opacity(0.85))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(16)
+        .background(
+            LinearGradient(colors: [Color.yellow.opacity(0.16), Color.orange.opacity(0.08)], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 16)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16).stroke(Color.yellow.opacity(0.35), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
-    private func familyOptionCard(
-        product: Product,
-        isSelected: Bool,
-        isSavings: Bool = false,
-        savingsPercentage: Int = 0,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button { action() } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Family")
-                                .font(.headline)
-                            Label("Share with up to 6 people", systemImage: "person.2.fill")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if isSavings {
-                            Text("Save \(savingsPercentage)%")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.orange)
-                                .padding(.vertical, 4)
-                                .padding(.horizontal, 8)
-                                .background(Color.orange.opacity(0.2))
-                                .cornerRadius(4)
-                        }
-                    }
+    private func bulletList(_ items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(items, id: \.self) { item in
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "checkmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color.yellow.opacity(0.95))
+                    Text(item)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.white.opacity(0.88))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(product.displayPrice)
-                        .font(.headline)
-                    Text(product.id.contains("monthly") ? "per month" : "per year")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? .orange : .secondary)
             }
-            .padding(12)
-            .background(isSelected ? Color.orange.opacity(0.1) : Color(.secondarySystemGroupedBackground))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
-            )
-        }
-    }
-
-    // MARK: - Actions
-
-    private func loadProducts() async {
-        await entitlementService.loadProducts()
-
-        proMonthlyProduct = entitlementService.products.first { $0.id == ProductID.proMonthly }
-        proAnnualProduct = entitlementService.products.first { $0.id == ProductID.proAnnual }
-        familyMonthlyProduct = entitlementService.products.first { $0.id == ProductID.familyMonthly }
-        familyAnnualProduct = entitlementService.products.first { $0.id == ProductID.familyAnnual }
-
-        // Default to pro monthly
-        if selectedProductID == nil {
-            selectedProductID = proMonthlyProduct?.id
-        }
-    }
-
-    private func purchaseSelected() {
-        guard let productID = selectedProductID else { return }
-        guard let product = entitlementService.products.first(where: { $0.id == productID }) else { return }
-
-        Task {
-            do {
-                let transaction = try await entitlementService.purchase(product)
-                if transaction != nil {
-                    // Purchase succeeded, dismiss
-                    dismiss()
-                }
-            } catch {
-                purchaseError = error.localizedDescription
-                showingError = true
-            }
-        }
-    }
-
-    private func restorePurchases() {
-        Task {
-            await entitlementService.restorePurchases()
         }
     }
 }

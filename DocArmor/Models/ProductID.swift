@@ -1,18 +1,10 @@
 import Foundation
 
+/// DocArmor sells a single non-consumable unlock IAP. That IAP plus a
+/// Sovereign subscription (purchased in Vaultyx, detected through the shared
+/// App Group `group.com.katafract.enclave`) are the only two paths to
+/// premium-local features — see `EntitlementService`.
 enum ProductID {
-    static let proMonthly    = "com.katafract.DocArmor.pro.monthly"
-    static let proAnnual     = "com.katafract.DocArmor.pro.annual"
-    static let familyMonthly = "com.katafract.DocArmor.family.monthly"
-    static let familyAnnual  = "com.katafract.DocArmor.family.annual"
-
-    static let all: Set<String> = [proMonthly, proAnnual, familyMonthly, familyAnnual]
-
-    static func plan(for productID: String) -> EntitlementService.Plan {
-        switch productID {
-        case familyMonthly, familyAnnual: return .family
-        case proMonthly, proAnnual:       return .pro
-        default:                          return .free
-        }
-    }
+    static let unlock = "com.katafract.DocArmor.unlock"
+    static let all: Set<String> = [unlock]
 }

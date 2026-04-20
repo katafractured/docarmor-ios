@@ -50,17 +50,6 @@ struct PresentModeView: View {
                 .tabViewStyle(.page(indexDisplayMode: images.count > 1 ? .always : .never))
                 .ignoresSafeArea()
 
-                // Free-use banner (if applicable)
-                if entitlementService.currentPlan == .free && entitlementService.presentModeUsesRemaining > 0 {
-                    VStack {
-                        Text("\(entitlementService.presentModeUsesRemaining) free uses remaining")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(12)
-                    .background(Color.orange.opacity(0.7))
-                }
             }
 
             // Dismiss button (top trailing)
@@ -80,13 +69,11 @@ struct PresentModeView: View {
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
         .onAppear {
-            // Check entitlement before activating present mode
-            if !entitlementService.canUsePresentMode {
+            // Premium gate: one-time unlock OR Sovereign bundle unlocks this.
+            guard entitlementService.canUsePresentMode else {
                 showingPaywall = true
                 return
             }
-            entitlementService.recordPresentModeUse()
-
             if let screen = activeScreen {
                 previousBrightness = screen.brightness
                 screen.brightness = 1.0
@@ -103,7 +90,7 @@ struct PresentModeView: View {
         } message: {
             Text("The document will no longer be displayed.")
         }
-        .sheet(isPresented: $showingPaywall) {
+        .sheet(isPresented: $showingPaywall, onDismiss: { dismiss() }) {
             PaywallView(
                 reason: .presentMode,
                 entitlementService: entitlementService,

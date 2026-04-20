@@ -96,7 +96,6 @@ struct DocArmorApp: App {
                 }
                 .task {
                     entitlementService.startListening()
-                    await entitlementService.refreshEntitlements()
                 }
         }
         .modelContainer(modelContainer)

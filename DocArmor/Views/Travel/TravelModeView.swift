@@ -10,7 +10,6 @@ struct TravelModeView: View {
     @State private var showingQuickPresent = false
     @State private var quickPresentImages: [UIImage] = []
     @State private var quickPresentDocumentName = ""
-    @State private var showingPaywall = false
 
     private let travelTypes: Set<DocumentType> = [
         .passport, .driversLicense, .stateID, .globalEntry,
@@ -41,38 +40,13 @@ struct TravelModeView: View {
         }
     }
 
+    @State private var showingPaywall = false
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             Group {
                 if !entitlementService.canUseTravelMode {
-                    // Locked state for non-Pro users
-                    VStack(spacing: 24) {
-                        Image(systemName: "lock.circle.fill")
-                            .font(.system(size: 64))
-                            .foregroundStyle(.orange)
-
-                        VStack(spacing: 8) {
-                            Text("Travel Mode is Pro")
-                                .font(.headline)
-                            Text("Organize all your travel documents in one dedicated space.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-
-                        Button(action: { showingPaywall = true }) {
-                            Text("Upgrade Now")
-                                .frame(maxWidth: .infinity)
-                                .font(.headline)
-                                .foregroundStyle(.white)
-                                .padding(12)
-                                .background(Color.orange)
-                                .cornerRadius(8)
-                        }
-
-                        Spacer()
-                    }
-                    .padding(24)
+                    PaywallLockedTravelView { showingPaywall = true }
                 } else if travelDocuments.isEmpty {
                     ContentUnavailableView(
                         "No Travel Documents",
@@ -184,6 +158,38 @@ struct TravelModeView: View {
                     entitlementService: entitlementService,
                     dismiss: { showingPaywall = false }
                 )
+            }
+        }
+    }
+
+    /// Locked state when neither the one-time unlock nor Sovereign is active.
+    private struct PaywallLockedTravelView: View {
+        let showPaywall: () -> Void
+        var body: some View {
+            VStack(spacing: 20) {
+                Spacer()
+                Image(systemName: "airplane.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.orange, Color.orange.opacity(0.18))
+                Text("Travel Mode")
+                    .font(.title2.bold())
+                Text("Pull every travel document into one ready-to-present view. Unlock DocArmor or add Sovereign to enable it.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                Button {
+                    showPaywall()
+                } label: {
+                    Text("See unlock options")
+                        .frame(maxWidth: .infinity)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 12)
+                        .background(Color.orange, in: RoundedRectangle(cornerRadius: 10))
+                        .padding(.horizontal, 32)
+                }
+                Spacer()
             }
         }
     }

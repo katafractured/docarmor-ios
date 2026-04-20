@@ -1,162 +1,173 @@
-import StoreKit
 import Foundation
+import StoreKit
+import SwiftUI
 
+/// DocArmor entitlement model (as of 1.1.4 / 2026-04-20):
+///
+/// Three states:
+///
+///   • `.locked` — fresh install, no purchase, no Sovereign subscription.
+///     Basic capabilities work (scan, view, basic folders, Face ID lock) but
+///     premium surfaces (Present Mode, Travel Mode, Smart Packs, Custom
+///     Packs, Household, Family Vault) show a paywall.
+///
+///   • `.unlocked` — the user paid the one-time `com.katafract.DocArmor.unlock`
+///     IAP ($12.99, non-consumable). All local features unlocked. Cloud
+///     backup still locked.
+///
+///   • `.sovereign` — the user has a Sovereign subscription in Vaultyx. Sigil
+///     token lives in shared App Group `group.com.katafract.enclave`. DocArmor
+///     reads the token, confirms plan == sovereign, unlocks everything AND
+///     enables cloud backup / cross-device sync to Shards S3.
+///
+/// Either path (one-time unlock OR Sovereign) gets you premium local
+/// features. Only Sovereign gets you cloud.
 @Observable
 @MainActor
 final class EntitlementService {
-    // Current entitlement level
     enum Plan: Int, Comparable {
-        case free = 0
-        case pro = 1
-        case family = 2
+        case locked    = 0
+        case unlocked  = 1
+        case sovereign = 2
         static func < (lhs: Plan, rhs: Plan) -> Bool { lhs.rawValue < rhs.rawValue }
     }
 
-    private(set) var currentPlan: Plan = .free
+    private(set) var currentPlan: Plan = .locked
     private(set) var isLoading: Bool = false
-    private(set) var products: [Product] = []
+    private(set) var unlockProduct: Product?
+    var purchaseError: String?
 
-    // Present Mode free-use counter (3 free uses)
-    var presentModeUsesRemaining: Int {
-        max(0, 3 - presentModeUseCount)
+    // MARK: - Feature gates
+
+    /// Premium local features — unlocked either by one-time IAP or Sovereign.
+    var hasPremiumLocal: Bool    { currentPlan >= .unlocked }
+    var canUsePresentMode: Bool  { hasPremiumLocal }
+    var canUseTravelMode: Bool   { hasPremiumLocal }
+    var canUseCustomPacks: Bool  { hasPremiumLocal }
+    var canManageHousehold: Bool { hasPremiumLocal }
+    var hasFamilyVault: Bool     { hasPremiumLocal }
+    var smartPackLimit: Int      { hasPremiumLocal ? .max : 1 }
+
+    /// Cloud backup — Sovereign only.
+    var hasCloudBackup: Bool { currentPlan == .sovereign }
+
+    var isSovereign: Bool { currentPlan == .sovereign }
+
+    // MARK: - Sovereign (App Group) detection
+
+    private static let enclaveAppGroup = "group.com.katafract.enclave"
+    private static let tokenKey        = "enclave.sigil.token"
+    private static let planKey         = "enclave.sigil.plan"
+
+    private var hasSovereignEntitlement: Bool {
+        guard let defaults = UserDefaults(suiteName: Self.enclaveAppGroup) else { return false }
+        let token = defaults.string(forKey: Self.tokenKey) ?? ""
+        let plan  = (defaults.string(forKey: Self.planKey) ?? "").lowercased()
+        return !token.isEmpty && (plan == "sovereign" || plan == "sovereign_annual")
     }
-    private var presentModeUseCount: Int {
-        get { UserDefaults.standard.integer(forKey: "presentModeUseCount") }
-        set { UserDefaults.standard.set(newValue, forKey: "presentModeUseCount") }
+
+    // MARK: - StoreKit (one-time unlock)
+
+    private var transactionListener: Task<Void, Never>?
+
+    func startListening() {
+        transactionListener?.cancel()
+        transactionListener = Task { [weak self] in
+            for await update in Transaction.updates {
+                guard let self else { return }
+                if case .verified(let txn) = update {
+                    await txn.finish()
+                    await self.refreshEntitlements()
+                }
+            }
+        }
+        // Foreground refresh so Sovereign flips on/off without a relaunch.
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in await self?.refreshEntitlements() }
+        }
+
+        Task { await self.refreshEntitlements() }
     }
 
-    func recordPresentModeUse() {
-        presentModeUseCount += 1
-    }
-
-    var canUsePresentMode: Bool {
-        currentPlan >= .pro || presentModeUsesRemaining > 0
-    }
-    var canUseTravelMode: Bool { currentPlan >= .pro }
-    var smartPackLimit: Int { currentPlan >= .pro ? Int.max : 1 }
-    var canUseCustomPacks: Bool { currentPlan >= .pro }
-    var canManageHousehold: Bool { currentPlan >= .pro }
-    var hasFamilyVault: Bool { currentPlan >= .family }
-
-    // MARK: - Product Loading
-
-    func loadProducts() async {
+    func loadProduct() async {
         isLoading = true
         defer { isLoading = false }
-
         do {
-            products = try await Product.products(for: ProductID.all)
-            // Sort by pro first, then family
-            products.sort { lhs, rhs in
-                let lhsPlan = ProductID.plan(for: lhs.id)
-                let rhsPlan = ProductID.plan(for: rhs.id)
-                if lhsPlan != rhsPlan {
-                    return lhsPlan > rhsPlan
+            let products = try await Product.products(for: [ProductID.unlock])
+            unlockProduct = products.first
+        } catch {
+            // Product load failures aren't fatal — app just can't show price.
+        }
+    }
+
+    func purchaseUnlock() async -> Bool {
+        guard let product = unlockProduct else {
+            purchaseError = "Unlock option is temporarily unavailable — please try again shortly."
+            return false
+        }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let result = try await product.purchase()
+            switch result {
+            case .success(let verification):
+                if case .verified(let txn) = verification {
+                    await txn.finish()
+                    await refreshEntitlements()
+                    return currentPlan >= .unlocked
                 }
-                return lhs.id < rhs.id
+                purchaseError = "Purchase could not be verified. Contact support if you were charged."
+                return false
+            case .userCancelled:
+                return false
+            case .pending:
+                purchaseError = "Purchase is pending approval (parental, Ask to Buy, etc.)."
+                return false
+            @unknown default:
+                return false
             }
         } catch {
-            // Log error but don't crash — gracefully degrade to free tier
-            print("Failed to load products: \(error)")
+            purchaseError = error.localizedDescription
+            return false
         }
     }
-
-    // MARK: - Purchases
-
-    func purchase(_ product: Product) async throws -> Transaction? {
-        isLoading = true
-        defer { isLoading = false }
-
-        let result = try await product.purchase()
-        switch result {
-        case .success(let verification):
-            // Get the verified transaction
-            switch verification {
-            case .verified(let transaction):
-                // Grant entitlement
-                await grant(entitlement: transaction)
-                await transaction.finish()
-                return transaction
-            case .unverified:
-                print("Transaction verification failed")
-                return nil
-            }
-        case .userCancelled:
-            return nil
-        case .pending:
-            return nil
-        @unknown default:
-            return nil
-        }
-    }
-
-    // MARK: - Restoration & Refresh
 
     func restorePurchases() async {
         isLoading = true
         defer { isLoading = false }
-
-        for await result in Transaction.currentEntitlements {
-            switch result {
-            case .verified(let transaction):
-                await grant(entitlement: transaction)
-                await transaction.finish()
-            case .unverified:
-                break
-            }
+        do {
+            try await AppStore.sync()
+        } catch {
+            purchaseError = "Restore failed: \(error.localizedDescription)"
         }
+        await refreshEntitlements()
     }
 
+    /// Reconcile state across (a) current StoreKit entitlements and (b) the
+    /// Enclave shared App Group. Highest wins.
     func refreshEntitlements() async {
-        isLoading = true
-        defer { isLoading = false }
+        var newPlan: Plan = .locked
 
-        var highestPlan: Plan = .free
-
+        // StoreKit: look for the non-consumable unlock
         for await result in Transaction.currentEntitlements {
-            switch result {
-            case .verified(let transaction):
-                let plan = ProductID.plan(for: transaction.productID)
-                if plan > highestPlan {
-                    highestPlan = plan
-                }
-                await transaction.finish()
-            case .unverified:
-                break
+            if case .verified(let txn) = result,
+               txn.productID == ProductID.unlock,
+               txn.revocationDate == nil {
+                newPlan = Self.max(newPlan, .unlocked)
             }
         }
 
-        // Also check Apple Family Sharing (if any family member has an entitlement, grant it)
-        // StoreKit 2 automatically includes family-shared subscriptions in currentEntitlements
-        currentPlan = highestPlan
-    }
-
-    // MARK: - Transaction Listening
-
-    func startListening() {
-        Task {
-            await listenForTransactions()
+        // Shared App Group: Sovereign from Vaultyx
+        if hasSovereignEntitlement {
+            newPlan = Self.max(newPlan, .sovereign)
         }
+
+        currentPlan = newPlan
     }
 
-    private func listenForTransactions() async {
-        for await result in Transaction.updates {
-            switch result {
-            case .verified(let transaction):
-                await grant(entitlement: transaction)
-                await transaction.finish()
-            case .unverified:
-                break
-            }
-        }
-    }
-
-    // MARK: - Private Helpers
-
-    private func grant(entitlement transaction: Transaction) async {
-        let plan = ProductID.plan(for: transaction.productID)
-        if plan > currentPlan {
-            currentPlan = plan
-        }
-    }
+    private static func max(_ a: Plan, _ b: Plan) -> Plan { a > b ? a : b }
 }
