@@ -78,6 +78,8 @@ struct VaultView: View {
     @AppStorage("smartPack.customTypes") private var legacyCustomPackRawTypes =
         DocumentType.encodePackSelection([.passport, .driversLicense, .insuranceHealth])
 
+    @State private var showingReadinessReview = false
+
     var pendingDocumentType: Binding<DocumentType?>
     var pendingCategory: Binding<DocumentCategory?>
 
@@ -548,6 +550,9 @@ struct VaultView: View {
             .sheet(isPresented: $showingTravelMode) {
                 TravelModeView()
             }
+            .sheet(isPresented: $showingReadinessReview) {
+                ReadinessReviewSheet(documents: allDocuments)
+            }
             .fullScreenCover(isPresented: $showingQuickPresent) {
                 PresentModeView(
                     images: quickPresentImages,
@@ -720,11 +725,11 @@ struct VaultView: View {
                         readinessCard(
                             title: "Needs Attention",
                             value: "\(attentionDocuments.count)",
-                            caption: "Expired, stale, or incomplete",
+                            caption: "Tap to review and fix",
                             systemImage: "exclamationmark.triangle.fill",
                             color: .orange
                         ) {
-                            selectedBundleFilter = .attention
+                            showingReadinessReview = true
                         }
 
                         readinessCard(
@@ -734,7 +739,7 @@ struct VaultView: View {
                             systemImage: "calendar.badge.exclamationmark",
                             color: .red
                         ) {
-                            selectedBundleFilter = .attention
+                            showingReadinessReview = true
                         }
 
                         readinessCard(
