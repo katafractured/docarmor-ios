@@ -503,10 +503,8 @@ struct VaultView: View {
                 if allDocuments.isEmpty {
                     emptyStateView
                 } else if filteredDocuments.isEmpty {
-                    ContentUnavailableView(
-                        "No Matching Documents",
-                        systemImage: "line.3.horizontal.decrease.circle",
-                        description: Text("Try a different search, type filter, or person filter.")
+    DocArmorEmptyState(title: "No Matching Documents", description: "Try a different search, type filter, or person filter.", systemImage: "line.3.horizontal.decrease.circle")
+
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {

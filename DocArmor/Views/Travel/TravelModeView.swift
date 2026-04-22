@@ -1,3 +1,4 @@
+// MARK: - EmptyStateView imported for empty states
 import SwiftUI
 import KatafractStyle
 import SwiftData
@@ -49,10 +50,10 @@ struct TravelModeView: View {
                 if !entitlementService.canUseTravelMode {
                     PaywallLockedTravelView { showingPaywall = true }
                 } else if travelDocuments.isEmpty {
-                    ContentUnavailableView(
-                        "No Travel Documents",
-                        systemImage: "airplane",
-                        description: Text("Add travel-category documents or types like passport, driver's license, and membership cards to see them here.")
+                    DocArmorEmptyState(
+                        title: "No Travel Documents",
+                        description: "Add travel-category documents or types like passport, driver's license, and membership cards to see them here.",
+                        systemImage: "airplane"
                     )
                 } else {
                     List {

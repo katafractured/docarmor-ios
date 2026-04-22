@@ -1,3 +1,4 @@
+// MARK: - EmptyStateView imported for empty states
 import SwiftUI
 import KatafractStyle
 import SwiftData
@@ -51,10 +52,10 @@ struct ReadinessReviewSheet: View {
         NavigationStack {
             Group {
                 if rows.isEmpty {
-                    ContentUnavailableView(
-                        "Everything looks ready",
-                        systemImage: "checkmark.seal.fill",
-                        description: Text("No documents currently need your attention.")
+                    DocArmorEmptyState(
+                        title: "Everything looks ready",
+                        description: "No documents currently need your attention.",
+                        systemImage: "checkmark.seal.fill"
                     )
                 } else {
                     List {

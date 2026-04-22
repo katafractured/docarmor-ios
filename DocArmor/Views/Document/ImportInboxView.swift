@@ -1,3 +1,4 @@
+// MARK: - EmptyStateView imported for empty states
 import SwiftUI
 import SwiftData
 
@@ -17,10 +18,10 @@ struct ImportInboxView: View {
         NavigationStack {
             Group {
                 if pendingItems.isEmpty {
-                    ContentUnavailableView(
-                        "No Shared Items",
-                        systemImage: "tray",
-                        description: Text("Items shared to DocArmor will appear here before you save them into the vault.")
+                    DocArmorEmptyState(
+                        title: "No Shared Items",
+                        description: "Items shared to DocArmor will appear here before you save them into the vault.",
+                        systemImage: "tray"
                     )
                 } else {
                     List {
