@@ -2,6 +2,7 @@ import CryptoKit
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import KatafractStyle
 
 struct AddDocumentView: View {
     private enum SaveMode {
@@ -368,7 +369,7 @@ struct AddDocumentView: View {
                     if isEditing {
                         // Existing pages (decrypted thumbnails)
                         if isLoadingExistingPages {
-                            ProgressView("Loading pages…")
+                            KataProgressRing(size: 16)
                         } else if !existingPageThumbnails.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
@@ -711,7 +712,7 @@ struct AddDocumentView: View {
                         .animation(.easeInOut(duration: 0.3), value: processingSubtitle)
                 }
 
-                ProgressView()
+                KataProgressRing(size: 36)
                     .padding(.top, 4)
 
                 Spacer()

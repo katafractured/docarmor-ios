@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import KatafractStyle
 
 struct VaultView: View {
     private enum BundleFilter: String, CaseIterable, Identifiable {
@@ -2066,55 +2067,70 @@ struct DocumentRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Doc type icon
+            // Monochrome sealed chip — no rainbow by type
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(document.category.color.opacity(0.15))
-                    .frame(width: 42, height: 42)
+                Capsule()
+                    .fill(Color.kataNavy.opacity(0.6))
+                    .overlay(Capsule().stroke(Color.kataGold, lineWidth: 0.5))
+                    .frame(width: 38, height: 38)
                 Image(systemName: document.documentType.systemImage)
-                    .font(.system(size: 18))
-                    .foregroundStyle(document.category.color)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color.kataGold.opacity(0.8))
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack {
+                HStack(spacing: 4) {
                     Text(document.name)
-                        .font(.body.weight(.medium))
+                        .font(.kataDisplay(15))
+                        .foregroundStyle(Color.kataIce)
                     if document.isFavorite {
                         Image(systemName: "star.fill")
                             .font(.caption2)
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(Color.kataGold)
                     }
                 }
                 Text(document.documentType.rawValue)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.kataCaption(11))
+                    .foregroundStyle(Color.kataIce.opacity(0.5))
                 Label(ownerLabel, systemImage: document.ownerName == nil ? "person.2.fill" : "person.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(.kataCaption(11))
+                    .foregroundStyle(Color.kataIce.opacity(0.35))
                 if document.isMissingRequiredPages {
                     Label("Missing page", systemImage: "doc.badge.plus")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
+                        .font(.kataCaption(11))
+                        .foregroundStyle(Color.kataChampagne.opacity(0.8))
                 } else if document.needsVerificationReview {
                     Label("Review recommended", systemImage: "checkmark.seal.trianglebadge.exclamationmark")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
+                        .font(.kataCaption(11))
+                        .foregroundStyle(Color.kataChampagne.opacity(0.8))
                 }
             }
 
             Spacer()
 
-            // Expiration badge
-            if let days = document.daysUntilExpiry {
-                ExpirationBadge(daysUntilExpiry: days, isExpired: document.isExpired)
+            VStack(alignment: .trailing, spacing: 4) {
+                if let days = document.daysUntilExpiry {
+                    ExpirationBadge(daysUntilExpiry: days, isExpired: document.isExpired)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(Color.kataGold.opacity(0.4))
             }
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.kataSapphire.opacity(0.04))
+        )
+        .overlay(
+            Group {
+                if document.needsAttention {
+                    RoundedRectangle(cornerRadius: 4).stroke(Color.kataChampagne.opacity(0.6), lineWidth: 0.5)
+                }
+            }
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 4))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(documentRowAccessibilityLabel)
     }
@@ -2135,29 +2151,24 @@ struct ExpirationBadge: View {
     let daysUntilExpiry: Int
     let isExpired: Bool
 
-    private var badgeColor: Color {
-        if isExpired { return .red }
-        if daysUntilExpiry <= 30 { return .orange }
-        return .green
-    }
-
     private var label: String {
-        if isExpired          { return "Expired" }
+        if isExpired              { return "Expired" }
         if daysUntilExpiry <= 30  { return "\(daysUntilExpiry)d" }
-        if daysUntilExpiry <= 365 { return "Valid" }
         return "Valid"
     }
 
+    /// Urgent = expired/expiring → kataChampagne (warm amber warning); healthy → kataGold faded.
+    private var labelColor: Color {
+        isExpired || daysUntilExpiry <= 30 ? Color.kataChampagne : Color.kataGold.opacity(0.5)
+    }
+
     var body: some View {
-        // Always show a badge when there is an expiration date — green for valid,
-        // orange for ≤30 days, red for expired. Hiding it for 31-365 days left
-        // users with no visual confirmation their document was still current.
         Text(label)
-            .font(.caption2.bold())
-            .padding(.horizontal, 6)
+            .font(.kataMono(10))
+            .padding(.horizontal, 5)
             .padding(.vertical, 2)
-            .background(badgeColor.opacity(0.15))
-            .foregroundStyle(badgeColor)
+            .background(labelColor.opacity(0.12))
+            .foregroundStyle(labelColor)
             .clipShape(Capsule())
             .accessibilityLabel(isExpired ? "Expired" : "\(daysUntilExpiry) days until expiry")
     }

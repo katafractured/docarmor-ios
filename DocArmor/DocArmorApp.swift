@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import KatafractStyle
 
 @main
 struct DocArmorApp: App {
@@ -97,6 +98,7 @@ struct DocArmorApp: App {
                 .task {
                     entitlementService.startListening()
                 }
+                .tint(KataAccent.gold)
         }
         .modelContainer(modelContainer)
     }

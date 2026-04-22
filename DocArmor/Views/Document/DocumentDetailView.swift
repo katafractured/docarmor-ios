@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import KatafractStyle
 
 struct DocumentDetailView: View {
     let document: Document
@@ -222,7 +223,7 @@ struct DocumentDetailView: View {
             Color(.systemGroupedBackground)
 
             if isLoading {
-                ProgressView()
+                KataProgressRing(size: 24)
             } else if let error = decryptError {
                 VStack(spacing: 8) {
                     Image(systemName: "exclamationmark.lock.fill")

@@ -1,5 +1,6 @@
 import SwiftUI
 import StoreKit
+import KatafractStyle
 
 /// Why the user landed on the paywall. Tunes the headline copy.
 enum PaywallReason {
@@ -159,7 +160,7 @@ struct PaywallView: View {
             } label: {
                 HStack(spacing: 8) {
                     if entitlementService.isLoading {
-                        ProgressView().tint(Color.kataNavy)
+                        KataProgressRing(size: 16)
                     } else {
                         Image(systemName: "lock.open.fill")
                         Text("Unlock for \(entitlementService.unlockProduct?.displayPrice ?? "$12.99")")

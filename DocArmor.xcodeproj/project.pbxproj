@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F60003A2B3C4D5 /* KatafractStyle in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60002A2B3C4D5 /* KatafractStyle */; };
 		BC3811822F7397AC00CE6623 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC3811812F7397AC00CE6623 /* WidgetKit.framework */; };
 		BC3811842F7397AC00CE6623 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC3811832F7397AC00CE6623 /* SwiftUI.framework */; };
 		BC3811912F7397AE00CE6623 /* DocArmorWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BC38117F2F7397AC00CE6623 /* DocArmorWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -103,6 +104,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D4E5F60003A2B3C4D5 /* KatafractStyle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +180,7 @@
 			);
 			name = DocArmor;
 			packageProductDependencies = (
+				A1B2C3D4E5F60002A2B3C4D5 /* KatafractStyle */,
 			);
 			productName = DocArmor;
 			productReference = CCC915A576C44C2F9A6E6450 /* DocArmor.app */;
@@ -260,6 +263,9 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7F31E9617BF54703BCB8493C /* Products */;
 			projectDirPath = "";
+			packageReferences = (
+				A1B2C3D4E5F60001A2B3C4D5 /* XCRemoteSwiftPackageReference "KatafractStyle" */,
+			);
 			projectRoot = "";
 			targets = (
 				268164EE7D2044D1A8DDB1F4 /* DocArmor */,
@@ -691,6 +697,24 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+/* Begin XCRemoteSwiftPackageReference section */
+		A1B2C3D4E5F60001A2B3C4D5 /* XCRemoteSwiftPackageReference "KatafractStyle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/katafract-io/KatafractStyle.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1B2C3D4E5F60002A2B3C4D5 /* KatafractStyle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D4E5F60001A2B3C4D5 /* XCRemoteSwiftPackageReference "KatafractStyle" */;
+			productName = KatafractStyle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9B28CB2CAE2648C2AB2AC2BB /* Project object */;
 }
