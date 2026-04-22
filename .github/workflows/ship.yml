@@ -1,0 +1,124 @@
+name: Ship to TestFlight
+
+on:
+  push:
+    branches: [ main, "release/*" ]
+    tags: [ "v*" ]
+  workflow_dispatch:
+    inputs:
+      skip_upload:
+        description: 'Skip TestFlight upload (archive only)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: ship-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  archive-and-upload:
+    name: Archive + TestFlight upload
+    runs-on: [ self-hosted, macOS, ios-build ]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Load runner-local env (paths)
+        run: |
+          if [ ! -f "$HOME/runner-env/docarmor.env" ]; then
+            echo "::error::Missing $HOME/runner-env/docarmor.env on runner"
+            exit 1
+          fi
+          grep -v '^#' "$HOME/runner-env/docarmor.env" | grep '=' >> "$GITHUB_ENV"
+
+      - name: Unlock keychain + codesign partition list
+        run: |
+          security unlock-keychain -p "" "$KEYCHAIN"
+          security set-keychain-settings -lut 7200 "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$KEYCHAIN" >/dev/null 2>&1
+          security find-identity -v -p codesigning "$KEYCHAIN" | head -5
+
+      - name: Resolve SPM packages
+        run: xcodebuild -project DocArmor.xcodeproj -scheme DocArmor -resolvePackageDependencies 2>&1 | tail -5
+
+      - name: Bump CFBundleVersion
+        run: |
+          BUILD_NUM=$((GITHUB_RUN_NUMBER + 50))
+          echo "Bumping CFBundleVersion to $BUILD_NUM"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $BUILD_NUM/g" DocArmor.xcodeproj/project.pbxproj
+          echo "BUILD_NUM=$BUILD_NUM" >> "$GITHUB_ENV"
+
+      - name: Clean prior archive
+        run: rm -rf "$ARCHIVE_PATH" "$EXPORT_PATH"
+
+      - name: Archive
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -project DocArmor.xcodeproj -scheme DocArmor \
+            -configuration Release -destination "generic/platform=iOS" \
+            -archivePath "$ARCHIVE_PATH" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            archive 2>&1 | tee /tmp/archive.log | grep -E "error:|warning:|\*\* |Signing Identity|Provisioning Profile" | tail -40
+          if [ ! -f "$ARCHIVE_PATH/Info.plist" ]; then
+            echo "::error::archive incomplete"
+            tail -80 /tmp/archive.log
+            exit 1
+          fi
+
+      - name: Embed real .appex extensions (deref symlinks)
+        run: |
+          APP="$ARCHIVE_PATH/Products/Applications/DocArmor.app"
+          mkdir -p "$APP/PlugIns"
+          # Find all .appex built and replace any symlinks in PlugIns with real copies
+          while IFS= read -r EXT; do
+            BN=$(basename "$EXT")
+            echo "embedding $BN"
+            rm -rf "$APP/PlugIns/$BN"
+            cp -R "$EXT" "$APP/PlugIns/"
+          done < <(find "$HOME/Library/Developer/Xcode/DerivedData" -type d -name "*.appex" -path "*UninstalledProducts*iphoneos*" 2>/dev/null)
+          ls -la "$APP/PlugIns/" 2>/dev/null || echo "(no PlugIns)"
+
+      - name: Export IPA (Distribution, manual signing)
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportOptionsPlist "$EXPORT_OPTIONS" \
+            -exportPath "$EXPORT_PATH" 2>&1 | grep -E "error:|\*\* " | tail -10
+          ls -la "$EXPORT_PATH"
+
+      - name: Verify IPA contents
+        run: |
+          rm -rf /tmp/verify-ipa && mkdir /tmp/verify-ipa
+          unzip -q "$EXPORT_PATH/DocArmor.ipa" -d /tmp/verify-ipa
+          ls -la "/tmp/verify-ipa/Payload/DocArmor.app/PlugIns/" 2>/dev/null || echo "(no PlugIns — main app only)"
+
+      - name: Upload to TestFlight
+        if: ${{ github.event.inputs.skip_upload != 'true' }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcrun altool --upload-app \
+            -f "$EXPORT_PATH/DocArmor.ipa" -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee /tmp/altool.log | tail -20
+          grep -q "UPLOAD SUCCEEDED" /tmp/altool.log
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Ship result" >> "$GITHUB_STEP_SUMMARY"
+          if grep -q "UPLOAD SUCCEEDED" /tmp/altool.log 2>/dev/null; then
+            UUID=$(grep -oE 'Delivery UUID: [a-f0-9-]+' /tmp/altool.log | head -1 | cut -d' ' -f3)
+            echo "- Build $BUILD_NUM uploaded to TestFlight" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Delivery UUID: $UUID" >> "$GITHUB_STEP_SUMMARY"
+          fi
