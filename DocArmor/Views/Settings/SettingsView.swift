@@ -160,7 +160,7 @@ struct SettingsView: View {
                         showingResetAlert = true
                     } label: {
                         Label("Reset Vault", systemImage: "trash.fill")
-                            .foregroundStyle(Color.kataCrimson)
+                            .foregroundStyle(Color.kataChampagne.opacity(0.85))
                     }
                     .disabled(isResetting)
                 }
@@ -490,7 +490,7 @@ struct SettingsView: View {
                     }
                 } header: {
                     Label("Emergency Card", systemImage: "cross.case.fill")
-                        .foregroundStyle(Color.kataCrimson)
+                        .foregroundStyle(Color.kataChampagne.opacity(0.85))
                 } footer: {
                     Text("Visible on the lock screen to emergency responders when the widget is added.")
                 }

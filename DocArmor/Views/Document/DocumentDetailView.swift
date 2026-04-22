@@ -228,7 +228,7 @@ struct DocumentDetailView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "exclamationmark.lock.fill")
                         .font(.largeTitle)
-                        .foregroundStyle(Color.kataCrimson)
+                        .foregroundStyle(Color.kataChampagne.opacity(0.85))
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.secondary)

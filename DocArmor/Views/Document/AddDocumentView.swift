@@ -546,7 +546,7 @@ struct AddDocumentView: View {
                 if let error = saveError {
                     Section {
                         Text(error)
-                            .foregroundStyle(Color.kataCrimson)
+                            .foregroundStyle(Color.kataChampagne.opacity(0.85))
                             .font(.caption)
                     }
                 }

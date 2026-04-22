@@ -28,7 +28,7 @@ struct BackupPassphraseSheet: View {
                     Section {
                         Text("Passphrases do not match.")
                             .font(.caption)
-                            .foregroundStyle(Color.kataCrimson)
+                            .foregroundStyle(Color.kataChampagne.opacity(0.85))
                     }
                 }
             }

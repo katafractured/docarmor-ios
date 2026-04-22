@@ -4,22 +4,22 @@ import KatafractStyle
 // MARK: - Branded haptic actions for DocArmor
 struct DocArmorHaptic {
     static func documentSaved() {
-        KataHaptic.saved()
+        KataHaptic.saved.fire()
     }
     
     static func syncComplete() {
-        KataHaptic.committed()
+        KataHaptic.saved.fire()
     }
     
     static func documentVerified() {
-        KataHaptic.unlocked()
+        KataHaptic.unlocked.fire()
     }
     
     static func scanCaptured() {
-        KataHaptic.tap()
+        KataHaptic.tap.fire()
     }
     
     static func deleteWarning() {
-        KataHaptic.denied()
+        KataHaptic.denied.fire()
     }
 }
