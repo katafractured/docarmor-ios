@@ -3,6 +3,7 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 import KatafractStyle
+// DocArmorHaptic for branded feedback
 
 struct AddDocumentView: View {
     private enum SaveMode {
@@ -1148,6 +1149,7 @@ struct AddDocumentView: View {
             }
             try modelContext.save()
             isSaving = false
+            DocArmorHaptic.documentSaved()
             dismiss()
         } catch {
             saveError = "Failed to save: \(error.localizedDescription)"

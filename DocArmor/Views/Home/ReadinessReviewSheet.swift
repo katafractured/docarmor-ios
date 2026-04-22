@@ -2,6 +2,7 @@
 import SwiftUI
 import KatafractStyle
 import SwiftData
+// DocArmorHaptic for branded feedback
 
 /// Shown when the user taps "Needs Attention" (or similar) on the home screen.
 /// Presents one row per (document, reason) pair so the user sees WHICH document
@@ -122,8 +123,7 @@ struct ReadinessReviewSheet: View {
         document.lastVerifiedAt = .now
         document.updatedAt = .now
         try? modelContext.save()
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        DocArmorHaptic.documentVerified()
     }
 }
 
