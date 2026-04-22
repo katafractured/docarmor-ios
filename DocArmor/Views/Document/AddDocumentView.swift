@@ -198,10 +198,10 @@ struct AddDocumentView: View {
                             ForEach(scanWarnings, id: \.self) { warning in
                                 Label(warning, systemImage: "exclamationmark.triangle.fill")
                                     .font(.caption)
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.kataChampagne.opacity(0.8))
                             }
                         }
-                        .listRowBackground(Color.orange.opacity(0.06))
+                        .listRowBackground(Color.kataChampagne.opacity(0.06))
                     }
                 }
 
@@ -536,7 +536,7 @@ struct AddDocumentView: View {
                         ForEach(scanWarnings, id: \.self) { warning in
                             Label(warning, systemImage: "exclamationmark.triangle.fill")
                                 .font(.caption)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(Color.kataChampagne.opacity(0.8))
                         }
                     }
                 }
@@ -545,7 +545,7 @@ struct AddDocumentView: View {
                 if let error = saveError {
                     Section {
                         Text(error)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.kataCrimson)
                             .font(.caption)
                     }
                 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import KatafractStyle
 import SwiftData
 import LocalAuthentication
 import UniformTypeIdentifiers
@@ -159,7 +160,7 @@ struct SettingsView: View {
                         showingResetAlert = true
                     } label: {
                         Label("Reset Vault", systemImage: "trash.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.kataCrimson)
                     }
                     .disabled(isResetting)
                 }
@@ -453,7 +454,7 @@ struct SettingsView: View {
                             systemImage: "exclamationmark.triangle.fill"
                         )
                         .font(.caption)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.kataChampagne.opacity(0.8))
 
                         emergencyField("Blood Type", text: $emergencyCard.bloodType, placeholder: "e.g. O+")
                         emergencyField(
@@ -489,7 +490,7 @@ struct SettingsView: View {
                     }
                 } header: {
                     Label("Emergency Card", systemImage: "cross.case.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.kataCrimson)
                 } footer: {
                     Text("Visible on the lock screen to emergency responders when the widget is added.")
                 }

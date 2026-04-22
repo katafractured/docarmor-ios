@@ -1,4 +1,5 @@
 import SwiftUI
+import KatafractStyle
 
 struct BackupPassphraseSheet: View {
     let operation: SettingsView.BackupOperation
@@ -27,7 +28,7 @@ struct BackupPassphraseSheet: View {
                     Section {
                         Text("Passphrases do not match.")
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.kataCrimson)
                     }
                 }
             }

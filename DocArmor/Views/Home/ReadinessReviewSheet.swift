@@ -1,4 +1,5 @@
 import SwiftUI
+import KatafractStyle
 import SwiftData
 
 /// Shown when the user taps "Needs Attention" (or similar) on the home screen.
@@ -102,7 +103,7 @@ struct ReadinessReviewSheet: View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.title2)
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.kataChampagne.opacity(0.8))
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(uniqueDocs) document\(uniqueDocs == 1 ? "" : "s") need attention")
                     .font(.subheadline.weight(.semibold))
@@ -189,7 +190,7 @@ private struct ReadinessRow: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .tint(.orange)
+            .tint(.kataChampagne)
 
         case .expired, .expiringSoon:
             Button(action: onOpenEditor) {

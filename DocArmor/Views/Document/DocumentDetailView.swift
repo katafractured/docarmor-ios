@@ -53,11 +53,11 @@ struct DocumentDetailView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             if document.isMissingRequiredPages {
                                 Label("Back side or supporting page is missing.", systemImage: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.kataChampagne.opacity(0.8))
                             }
                             if document.needsVerificationReview {
                                 Label("Review this document for accuracy. It has not been verified recently.", systemImage: "checkmark.seal.trianglebadge.exclamationmark")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.kataChampagne.opacity(0.8))
                             }
                         }
                         .font(.caption)
@@ -228,7 +228,7 @@ struct DocumentDetailView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "exclamationmark.lock.fill")
                         .font(.largeTitle)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.kataCrimson)
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.secondary)

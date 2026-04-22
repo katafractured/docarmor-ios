@@ -1,4 +1,5 @@
 import SwiftUI
+import KatafractStyle
 import SwiftData
 
 struct TravelModeView: View {
@@ -128,7 +129,7 @@ struct TravelModeView: View {
                                 }
                             } header: {
                                 Label("Needs Attention", systemImage: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.kataChampagne.opacity(0.8))
                                     .font(.footnote.bold())
                             }
                         }
@@ -170,7 +171,7 @@ struct TravelModeView: View {
                 Spacer()
                 Image(systemName: "airplane.circle.fill")
                     .font(.system(size: 64))
-                    .foregroundStyle(.orange, Color.orange.opacity(0.18))
+                    .foregroundStyle(.orange, Color.kataChampagne.opacity(0.18))
                 Text("Travel Mode")
                     .font(.title2.bold())
                 Text("Pull every travel document into one ready-to-present view. Unlock DocArmor or add Sovereign to enable it.")
@@ -186,7 +187,7 @@ struct TravelModeView: View {
                         .font(.headline)
                         .foregroundStyle(.white)
                         .padding(.vertical, 12)
-                        .background(Color.orange, in: RoundedRectangle(cornerRadius: 10))
+                        .background(Color.kataChampagne, in: RoundedRectangle(cornerRadius: 10))
                         .padding(.horizontal, 32)
                 }
                 Spacer()
