@@ -80,6 +80,8 @@ struct VaultView: View {
         DocumentType.encodePackSelection([.passport, .driversLicense, .insuranceHealth])
 
     @State private var showingReadinessReview = false
+    @State private var selectedPreparednessItem: PreparednessChecklistItem?
+    @AppStorage("preparedness.ignoredGaps") private var ignoredGapsRaw: String = ""
 
     var pendingDocumentType: Binding<DocumentType?>
     var pendingCategory: Binding<DocumentCategory?>
@@ -452,43 +454,101 @@ struct VaultView: View {
     private let petPacketEssentials: [DocumentType] = [.vaccineRecord, .emergencyContacts]
 
     private var preparednessChecklist: [PreparednessChecklistItem] {
-        [
+        let travelGapsFlat = householdGaps.flatMap { gap in
+            gap.missingTypes.filter { householdEssentials.contains($0) || $0 == .passport }.map { type in
+                PreparednessGap(
+                    id: "\(gap.ownerName)-\(type.rawValue)",
+                    documentTypeLabel: type.rawValue,
+                    personName: gap.ownerName,
+                    detail: nil
+                )
+            }
+        }
+
+        let medicalGapsFlat = medicalVisitGaps.flatMap { gap in
+            gap.missingTypes.map { type in
+                PreparednessGap(
+                    id: "\(gap.ownerName)-\(type.rawValue)",
+                    documentTypeLabel: type.rawValue,
+                    personName: gap.ownerName,
+                    detail: nil
+                )
+            }
+        }
+
+        let disasterGapsFlat = disasterPacketGaps.flatMap { gap in
+            gap.missingTypes.map { type in
+                PreparednessGap(
+                    id: "\(gap.ownerName)-\(type.rawValue)",
+                    documentTypeLabel: type.rawValue,
+                    personName: gap.ownerName,
+                    detail: nil
+                )
+            }
+        }
+
+        let householdGapsFlat = householdGaps.flatMap { gap in
+            gap.missingTypes.map { type in
+                PreparednessGap(
+                    id: "\(gap.ownerName)-\(type.rawValue)",
+                    documentTypeLabel: type.rawValue,
+                    personName: gap.ownerName,
+                    detail: nil
+                )
+            }
+        }
+
+        let propertyGapsFlat = propertyClaimGaps.flatMap { gap in
+            gap.missingTypes.map { type in
+                PreparednessGap(
+                    id: "\(gap.ownerName)-\(type.rawValue)",
+                    documentTypeLabel: type.rawValue,
+                    personName: gap.ownerName,
+                    detail: nil
+                )
+            }
+        }
+
+        return [
             PreparednessChecklistItem(
                 title: "Travel",
                 systemImage: "airplane.departure",
                 readyCount: allDocuments.filter { matches(document: $0, bundle: .travel) }.count,
-                missingCount: householdGaps.reduce(0) { partialResult, gap in
-                    partialResult + gap.missingTypes.filter { householdEssentials.contains($0) || $0 == .passport }.count
-                },
-                caption: "Passports, travel IDs, and household travel readiness"
+                missingCount: travelGapsFlat.count,
+                caption: "Passports, travel IDs, and household travel readiness",
+                gaps: travelGapsFlat
             ),
             PreparednessChecklistItem(
                 title: "Medical",
                 systemImage: "cross.case.fill",
                 readyCount: medicalVisitDocuments.count,
                 missingCount: medicalVisitGaps.count,
-                caption: "Insurance, prescriptions, and intake-ready records"
+                caption: "Insurance, prescriptions, and intake-ready records",
+                gaps: medicalGapsFlat
             ),
             PreparednessChecklistItem(
                 title: "Disaster",
                 systemImage: "bolt.shield.fill",
                 readyCount: disasterPacketDocuments.count,
                 missingCount: disasterPacketGaps.count,
-                caption: "Grab-and-go identity, medical, and insurance docs"
+                caption: "Grab-and-go identity, medical, and insurance docs",
+                gaps: disasterGapsFlat
             ),
             PreparednessChecklistItem(
                 title: "Household",
                 systemImage: "person.3.sequence.fill",
                 readyCount: familyPacketDocuments.count,
                 missingCount: householdGaps.count,
-                caption: "Family essentials and dependent support coverage"
+                caption: "Family essentials and dependent support coverage",
+                gaps: householdGapsFlat
             ),
             PreparednessChecklistItem(
                 title: "Property",
                 systemImage: "house.fill",
                 readyCount: propertyClaimDocuments.count,
                 missingCount: propertyClaimGaps.count,
-                caption: "Claim-ready housing and identity documents"
+                caption: "Claim-ready housing and identity documents",
+                gaps: propertyGapsFlat
             )
         ]
     }
@@ -553,6 +613,9 @@ struct VaultView: View {
             }
             .sheet(isPresented: $showingReadinessReview) {
                 ReadinessReviewSheet(documents: allDocuments)
+            }
+            .sheet(item: $selectedPreparednessItem) { item in
+                PreparednessDetailSheet(item: item, ignoredGapsRaw: $ignoredGapsRaw)
             }
             .fullScreenCover(isPresented: $showingQuickPresent) {
                 PresentModeView(
@@ -720,6 +783,23 @@ struct VaultView: View {
 
     private var documentList: some View {
         List {
+            if selectedBundleFilter != .all {
+                Section {
+                    Button {
+                        selectedBundleFilter = .all
+                        selectedTypeFilter = nil
+                        selectedOwnerFilter = nil
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.left.circle.fill")
+                            Text("Show All")
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
             Section("Readiness") {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -771,26 +851,34 @@ struct VaultView: View {
             if preparednessEnabled {
                 Section("Preparedness Checklist") {
                     ForEach(preparednessChecklist) { item in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: item.systemImage)
-                                .foregroundStyle(item.isReady ? .green : .kataChampagne)
-                                .frame(width: 22)
+                        Button(action: { selectedPreparednessItem = item }) {
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: item.systemImage)
+                                    .foregroundStyle(item.isReady ? .green : .kataChampagne)
+                                    .frame(width: 22)
 
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text(item.title)
-                                        .font(.subheadline.weight(.semibold))
-                                    Spacer()
-                                    Text(item.statusText)
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(item.isReady ? .green : .kataChampagne)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(item.title)
+                                            .font(.subheadline.weight(.semibold))
+                                        Spacer()
+                                        Text(item.statusText)
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundStyle(item.isReady ? .green : .kataChampagne)
+                                    }
+
+                                    Text(item.caption)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
 
-                                Text(item.caption)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.tertiary)
+                                    .frame(width: 22)
                             }
                         }
+                        .buttonStyle(.plain)
                         .padding(.vertical, 2)
                     }
                 }
@@ -1970,12 +2058,20 @@ private struct PetPacketGap: Identifiable {
     }
 }
 
+struct PreparednessGap: Identifiable, Hashable {
+    let id: String
+    let documentTypeLabel: String
+    let personName: String?
+    let detail: String?
+}
+
 private struct PreparednessChecklistItem: Identifiable {
     let title: String
     let systemImage: String
     let readyCount: Int
     let missingCount: Int
     let caption: String
+    let gaps: [PreparednessGap]
 
     var id: String { title }
 
