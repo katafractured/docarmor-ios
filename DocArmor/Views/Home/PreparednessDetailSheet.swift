@@ -6,7 +6,7 @@ struct PreparednessDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private var ignoredGapIDs: Set<String> {
-        Set(ignoredGapsRaw.split(separator: ",").map(String.init))
+        Set(ignoredGapsRaw.split(separator: "|").map(String.init))
     }
 
     private func toggleIgnore(_ gapID: String) {
@@ -16,7 +16,7 @@ struct PreparednessDetailSheet: View {
         } else {
             current.insert(gapID)
         }
-        ignoredGapsRaw = current.sorted().joined(separator: ",")
+        ignoredGapsRaw = current.sorted().joined(separator: "|")
     }
 
     private var activeGaps: [PreparednessGap] {
@@ -56,6 +56,7 @@ struct PreparednessDetailSheet: View {
                                             .foregroundStyle(.tertiary)
                                     }
                                     .buttonStyle(.borderless)
+                                    .accessibilityLabel("Ignore this gap")
                                 }
                             }
                         }
