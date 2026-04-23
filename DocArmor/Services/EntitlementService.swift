@@ -148,27 +148,33 @@ final class EntitlementService {
     }
 
     /// Reconcile state across (a) current StoreKit entitlements, (b) the
-    /// Enclave shared App Group, and (c) platform bundle-unlock. Highest wins.
+    /// Enclave shared App Group, (c) platform bundle-unlock, and (d) ScreenshotMode override.
+    /// Highest wins.
     func refreshEntitlements() async {
         var newPlan: Plan = .locked
 
-        // Check platform bundle-unlock first (Enclave/Sovereign token)
-        if PlatformEntitlement.isPlatformUnlocked {
-            newPlan = Self.max(newPlan, .unlocked)
-        }
-
-        // StoreKit: look for the non-consumable unlock
-        for await result in Transaction.currentEntitlements {
-            if case .verified(let txn) = result,
-               txn.productID == ProductID.unlock,
-               txn.revocationDate == nil {
+        // ScreenshotMode override: always Sovereign for fastlane snapshots
+        if ScreenshotMode.isEnabled {
+            newPlan = .sovereign
+        } else {
+            // Check platform bundle-unlock first (Enclave/Sovereign token)
+            if PlatformEntitlement.isPlatformUnlocked {
                 newPlan = Self.max(newPlan, .unlocked)
             }
-        }
 
-        // Shared App Group: Sovereign from Vaultyx
-        if hasSovereignEntitlement {
-            newPlan = Self.max(newPlan, .sovereign)
+            // StoreKit: look for the non-consumable unlock
+            for await result in Transaction.currentEntitlements {
+                if case .verified(let txn) = result,
+                   txn.productID == ProductID.unlock,
+                   txn.revocationDate == nil {
+                    newPlan = Self.max(newPlan, .unlocked)
+                }
+            }
+
+            // Shared App Group: Sovereign from Vaultyx
+            if hasSovereignEntitlement {
+                newPlan = Self.max(newPlan, .sovereign)
+            }
         }
 
         currentPlan = newPlan

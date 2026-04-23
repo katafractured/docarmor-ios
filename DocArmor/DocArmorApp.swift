@@ -22,12 +22,14 @@ struct DocArmorApp: App {
         // Configure SwiftData with explicit no-CloudKit to ensure local-only storage
         let config = ModelConfiguration(
             schema: Schema([Document.self, DocumentPage.self]),
-            isStoredInMemoryOnly: false,
+            isStoredInMemoryOnly: ScreenshotMode.isEnabled, // Use in-memory DB for screenshot tests
             allowsSave: true,
             cloudKitDatabase: .none
         )
         do {
             modelContainer = try ModelContainer(for: Document.self, DocumentPage.self, configurations: config)
+            // Seed synthetic documents when ScreenshotMode is active
+            modelContainer.seedScreenshotModeData()
         } catch {
             fatalError("Failed to create SwiftData container: \(error)")
         }
