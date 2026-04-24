@@ -289,10 +289,9 @@ jobs:
       - name: Wait before retry
         run: sleep 120
 
-      - name: Re-dispatch workflow
+      - name: Rerun failed jobs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run ship.yml \
-            --repo "${{ github.repository }}" \
-            --ref "${{ github.ref_name }}" || true
+          gh run rerun "${{ github.run_id }}" \
+            --repo "${{ github.repository }}" || true
