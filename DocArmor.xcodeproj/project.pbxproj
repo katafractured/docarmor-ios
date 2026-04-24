@@ -307,7 +307,7 @@
 			targets = (
 				268164EE7D2044D1A8DDB1F4 /* DocArmor */,
 				BC38117E2F7397AC00CE6623 /* DocArmorWidgetExtension */,
-				D0C0A10A2F90000100C0FFEE /* DocArmorShareExtension */,,
+				D0C0A10A2F90000100C0FFEE /* DocArmorShareExtension */,
 				F1A2B3C4D5E6F008A2B3C4D5 /* DocArmorUITests */,
 			);
 		};
