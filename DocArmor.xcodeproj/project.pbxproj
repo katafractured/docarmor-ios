@@ -415,7 +415,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = DocArmor;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "DocArmor uses your camera to scan documents.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Katafract LLC";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "(c) 2026 Katafract LLC";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "DocArmor can import documents from your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -630,7 +630,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "DocArmor uses your camera to scan documents.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "DocArmor uses Face ID to protect your documents.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Katafract LLC";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "(c) 2026 Katafract LLC";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "DocArmor can import documents from your photo library.";
 				INFOPLIST_KEY_NSSiriUsageDescription = "DocArmor uses Siri to let you quickly access your documents by voice.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
