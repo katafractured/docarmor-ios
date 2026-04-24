@@ -851,34 +851,42 @@ struct VaultView: View {
             if preparednessEnabled {
                 Section("Preparedness Checklist") {
                     ForEach(preparednessChecklist) { item in
-                        Button(action: { selectedPreparednessItem = item }) {
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: item.systemImage)
-                                    .foregroundStyle(item.isReady ? .green : .kataChampagne)
-                                    .frame(width: 22)
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: item.systemImage)
+                                .foregroundStyle(item.isReady ? .green : .kataChampagne)
+                                .frame(width: 22)
 
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(item.title)
-                                            .font(.subheadline.weight(.semibold))
-                                        Spacer()
-                                        Text(item.statusText)
-                                            .font(.caption.weight(.semibold))
-                                            .foregroundStyle(item.isReady ? .green : .kataChampagne)
-                                    }
-
-                                    Text(item.caption)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(item.title)
+                                        .font(.subheadline.weight(.semibold))
+                                    Spacer()
+                                    Text(item.statusText)
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(item.isReady ? .green : .kataChampagne)
                                 }
 
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(.tertiary)
-                                    .frame(width: 22)
+                                Text(item.caption)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+
+                                if !item.gapPreview.isEmpty {
+                                    Text(item.gapPreview)
+                                        .font(.caption2)
+                                        .foregroundStyle(.kataChampagne)
+                                        .lineLimit(2)
+                                }
                             }
+
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 22)
                         }
-                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedPreparednessItem = item
+                        }
                         .padding(.vertical, 2)
                     }
                 }
@@ -2065,7 +2073,7 @@ struct PreparednessGap: Identifiable, Hashable {
     let detail: String?
 }
 
-private struct PreparednessChecklistItem: Identifiable {
+struct PreparednessChecklistItem: Identifiable {
     let title: String
     let systemImage: String
     let readyCount: Int
@@ -2084,6 +2092,21 @@ private struct PreparednessChecklistItem: Identifiable {
             return readyCount > 0 ? "Ready" : "Needs Setup"
         }
         return "\(missingCount) gap\(missingCount == 1 ? "" : "s")"
+    }
+
+    /// Compact one-line preview of the first few missing docs — surfaced on
+    /// the row itself so the user can see *what* is missing without having
+    /// to open the detail sheet. Returns "" if no gaps or preview not helpful.
+    var gapPreview: String {
+        guard !gaps.isEmpty else { return "" }
+        let labels = gaps.prefix(3).map { g -> String in
+            if let person = g.personName, !person.isEmpty {
+                return "\(g.documentTypeLabel) · \(person)"
+            }
+            return g.documentTypeLabel
+        }
+        let suffix = gaps.count > 3 ? " +\(gaps.count - 3) more" : ""
+        return "Missing: " + labels.joined(separator: ", ") + suffix
     }
 }
 
