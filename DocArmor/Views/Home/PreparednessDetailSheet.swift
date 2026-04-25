@@ -1,4 +1,5 @@
 import SwiftUI
+import KatafractStyle
 
 struct PreparednessDetailSheet: View {
     let item: PreparednessChecklistItem
