@@ -13,8 +13,8 @@ public class ScreenshotMode {
                 id: UUID(),
                 name: "Driver License - California",
                 ownerName: nil,
-                documentTypeRaw: "drivingLicense",
-                categoryRaw: "identity",
+                documentType: .driversLicense,
+                category: .identity,
                 notes: "Primary ID",
                 issuerName: "California DMV",
                 identifierSuffix: "4829",
@@ -28,17 +28,14 @@ public class ScreenshotMode {
                 renewalNotes: "Renew in 2025",
                 expirationDate: Date(timeIntervalSinceNow: 365 * 86400),
                 expirationReminderDays: [90, 30],
-                createdAt: Date(timeIntervalSinceNow: -30 * 86400),
-                updatedAt: Date(timeIntervalSinceNow: -3600),
-                isFavorite: true,
-                pages: []
+                isFavorite: true
             ),
             Document(
                 id: UUID(),
                 name: "Passport - United States",
                 ownerName: nil,
-                documentTypeRaw: "passport",
-                categoryRaw: "travel",
+                documentType: .passport,
+                category: .travel,
                 notes: "Primary travel document",
                 issuerName: "U.S. Department of State",
                 identifierSuffix: "2849",
@@ -52,17 +49,14 @@ public class ScreenshotMode {
                 renewalNotes: "Valid until 2029",
                 expirationDate: Date(timeIntervalSinceNow: 5 * 365 * 86400),
                 expirationReminderDays: [180],
-                createdAt: Date(timeIntervalSinceNow: -60 * 86400),
-                updatedAt: Date(timeIntervalSinceNow: -7200),
-                isFavorite: false,
-                pages: []
+                isFavorite: false
             ),
             Document(
                 id: UUID(),
                 name: "Tax Return 2024",
                 ownerName: nil,
-                documentTypeRaw: "taxReturn",
-                categoryRaw: "financial",
+                documentType: .custom,
+                category: .financial,
                 notes: "Filed with IRS",
                 issuerName: "Internal Revenue Service",
                 identifierSuffix: "2024",
@@ -76,17 +70,14 @@ public class ScreenshotMode {
                 renewalNotes: "Keep 7 years",
                 expirationDate: nil,
                 expirationReminderDays: nil,
-                createdAt: Date(timeIntervalSinceNow: -90 * 86400),
-                updatedAt: Date(timeIntervalSinceNow: -10800),
-                isFavorite: false,
-                pages: []
+                isFavorite: false
             ),
             Document(
                 id: UUID(),
                 name: "Mortgage Statement - Primary Residence",
                 ownerName: nil,
-                documentTypeRaw: "mortgageStatement",
-                categoryRaw: "financial",
+                documentType: .custom,
+                category: .financial,
                 notes: "Current loan balance",
                 issuerName: "Chase Bank",
                 identifierSuffix: "5829",
@@ -100,17 +91,14 @@ public class ScreenshotMode {
                 renewalNotes: "30-year fixed at 3.875%",
                 expirationDate: Date(timeIntervalSinceNow: 30 * 365 * 86400),
                 expirationReminderDays: nil,
-                createdAt: Date(timeIntervalSinceNow: -120 * 86400),
-                updatedAt: Date(timeIntervalSinceNow: -14400),
-                isFavorite: false,
-                pages: []
+                isFavorite: false
             ),
             Document(
                 id: UUID(),
                 name: "Vehicle Title - 2021 Tesla Model 3",
                 ownerName: nil,
-                documentTypeRaw: "vehicleTitle",
-                categoryRaw: "ownership",
+                documentType: .custom,
+                category: .custom,
                 notes: "Clear title on file",
                 issuerName: "California DMV",
                 identifierSuffix: "7392",
@@ -124,10 +112,7 @@ public class ScreenshotMode {
                 renewalNotes: "Owned free and clear",
                 expirationDate: nil,
                 expirationReminderDays: nil,
-                createdAt: Date(timeIntervalSinceNow: -150 * 86400),
-                updatedAt: Date(timeIntervalSinceNow: -18000),
-                isFavorite: false,
-                pages: []
+                isFavorite: false
             )
         ]
     }
