@@ -31,29 +31,6 @@ struct PreparednessDetailSheet: View {
         Dictionary(grouping: activeGaps, by: { $0.personName ?? "Household" })
     }
 
-    @ViewBuilder
-    private func activeGapRow(_ gap: PreparednessGap) -> some View {
-        HStack {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(Color.kataChampagne)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(gap.documentTypeLabel).font(.subheadline.weight(.medium))
-                if let detail = gap.detail {
-                    Text(detail).font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-            Button {
-                toggleIgnore(gap.id)
-            } label: {
-                Image(systemName: "eye.slash")
-                    .foregroundStyle(.tertiary)
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel("Ignore this gap")
-        }
-    }
-
     var body: some View {
         NavigationStack {
             List {
@@ -62,7 +39,25 @@ struct PreparednessDetailSheet: View {
                     ForEach(activeGapsByPerson.keys.sorted(), id: \.self) { personName in
                         Section(header: Text(personName).font(.headline)) {
                             ForEach(activeGapsByPerson[personName] ?? [], id: \.id) { gap in
-                                activeGapRow(gap)
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.kataChampagne)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(gap.documentTypeLabel).font(.subheadline.weight(.medium))
+                                        if let detail = gap.detail {
+                                            Text(detail).font(.caption).foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                    Button {
+                                        toggleIgnore(gap.id)
+                                    } label: {
+                                        Image(systemName: "eye.slash")
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel("Ignore this gap")
+                                }
                             }
                         }
                     }

@@ -510,6 +510,12 @@ struct SettingsView: View {
                         Text("Katafract LLC")
                             .foregroundStyle(.secondary)
                     }
+
+                    NavigationLink {
+                        AppGroupDiagnosticsView()
+                    } label: {
+                        Label("App Group Diagnostics", systemImage: "checklist")
+                    }
                 }
 
                 Section("Support & Legal") {
