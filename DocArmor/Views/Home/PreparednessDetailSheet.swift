@@ -35,7 +35,7 @@ struct PreparednessDetailSheet: View {
     private func activeGapRow(_ gap: PreparednessGap) -> some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.kataChampagne)
+                .foregroundStyle(Color.kataChampagne)
             VStack(alignment: .leading, spacing: 2) {
                 Text(gap.documentTypeLabel).font(.subheadline.weight(.medium))
                 if let detail = gap.detail {
