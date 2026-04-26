@@ -57,10 +57,6 @@ struct LockScreenView: View {
                 Spacer().frame(height: 16)
             }
         }
-        .task {
-            // Auto-trigger biometric prompt on appear
-            await auth.authenticate()
-        }
     }
 
     private var biometryIcon: String {

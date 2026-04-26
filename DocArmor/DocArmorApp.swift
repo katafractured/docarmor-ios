@@ -76,6 +76,10 @@ struct DocArmorApp: App {
                         autoLockService.stopMonitoring()
                     case .active:
                         autoLockService.startMonitoring()
+                        // Trigger auth only on .active to avoid LAError.notInteractive
+                        if authService.state == .locked {
+                            Task { await authService.authenticate() }
+                        }
                     default:
                         break
                     }
