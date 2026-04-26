@@ -781,6 +781,47 @@ struct VaultView: View {
             .clipShape(Capsule())
     }
 
+    @ViewBuilder
+    private func preparednessRow(_ item: PreparednessChecklistItem) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: item.systemImage)
+                .foregroundStyle(item.isReady ? Color.green : Color.kataChampagne)
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(item.title)
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Text(item.statusText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(item.isReady ? Color.green : Color.kataChampagne)
+                }
+
+                Text(item.caption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if !item.gapPreview.isEmpty {
+                    Text(item.gapPreview)
+                        .font(.caption2)
+                        .foregroundStyle(Color.kataChampagne)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundStyle(.tertiary)
+                .frame(width: 22)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedPreparednessItem = item
+        }
+        .padding(.vertical, 2)
+    }
+
     private var documentList: some View {
         List {
             if selectedBundleFilter != .all {
@@ -851,43 +892,7 @@ struct VaultView: View {
             if preparednessEnabled {
                 Section("Preparedness Checklist") {
                     ForEach(preparednessChecklist) { item in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: item.systemImage)
-                                .foregroundStyle(item.isReady ? .green : .kataChampagne)
-                                .frame(width: 22)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text(item.title)
-                                        .font(.subheadline.weight(.semibold))
-                                    Spacer()
-                                    Text(item.statusText)
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(item.isReady ? .green : .kataChampagne)
-                                }
-
-                                Text(item.caption)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-
-                                if !item.gapPreview.isEmpty {
-                                    Text(item.gapPreview)
-                                        .font(.caption2)
-                                        .foregroundStyle(.kataChampagne)
-                                        .lineLimit(2)
-                                }
-                            }
-
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundStyle(.tertiary)
-                                .frame(width: 22)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedPreparednessItem = item
-                        }
-                        .padding(.vertical, 2)
+                        preparednessRow(item)
                     }
                 }
             }
