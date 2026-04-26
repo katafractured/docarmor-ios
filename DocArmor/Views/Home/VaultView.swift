@@ -2065,7 +2065,7 @@ struct PreparednessGap: Identifiable, Hashable {
     let detail: String?
 }
 
-private struct PreparednessChecklistItem: Identifiable {
+struct PreparednessChecklistItem: Identifiable {
     let title: String
     let systemImage: String
     let readyCount: Int
