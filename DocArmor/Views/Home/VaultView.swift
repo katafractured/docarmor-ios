@@ -83,6 +83,8 @@ struct VaultView: View {
     @State private var selectedPreparednessItem: PreparednessChecklistItem?
     @AppStorage("preparedness.ignoredGaps") private var ignoredGapsRaw: String = ""
 
+    @State private var selectedRenewalWorkflow: RenewalWorkflowItem?
+
     var pendingDocumentType: Binding<DocumentType?>
     var pendingCategory: Binding<DocumentCategory?>
 
@@ -617,6 +619,9 @@ struct VaultView: View {
             .sheet(item: $selectedPreparednessItem) { item in
                 PreparednessDetailSheet(item: item, ignoredGapsRaw: $ignoredGapsRaw)
             }
+            .sheet(item: $selectedRenewalWorkflow) { workflow in
+                RenewalWorkflowSheet(workflow: workflow, allDocuments: allDocuments)
+            }
             .fullScreenCover(isPresented: $showingQuickPresent) {
                 PresentModeView(
                     images: quickPresentImages,
@@ -901,7 +906,7 @@ struct VaultView: View {
                 Section("Renewal Workflows") {
                     ForEach(renewalWorkflows) { workflow in
                         Button {
-                            selectedBundleFilter = .attention
+                            selectedRenewalWorkflow = workflow
                         } label: {
                             HStack(alignment: .top, spacing: 12) {
                                 Image(systemName: workflow.systemImage)
@@ -2118,7 +2123,7 @@ struct PreparednessChecklistItem: Identifiable {
     }
 }
 
-private struct RenewalWorkflowItem: Identifiable {
+private struct RenewalWorkflowItem: Identifiable, Hashable {
     let title: String
     let systemImage: String
     let count: Int
@@ -2298,6 +2303,66 @@ struct ExpirationBadge: View {
             .foregroundStyle(labelColor)
             .clipShape(Capsule())
             .accessibilityLabel(isExpired ? "Expired" : "\(daysUntilExpiry) days until expiry")
+    }
+}
+
+// MARK: - RenewalWorkflowSheet
+
+private struct RenewalWorkflowSheet: View {
+    let workflow: RenewalWorkflowItem
+    let allDocuments: [Document]
+    @Environment(\.dismiss) var dismiss
+
+    private var relevantDocuments: [Document] {
+        allDocuments.filter { doc in
+            switch workflow.title {
+            case "Renew Now":
+                return doc.isExpired
+            case "Handle Soon":
+                return !doc.isExpired && doc.daysUntilExpiry <= 30 && doc.daysUntilExpiry > 0
+            case "Finish Setup":
+                return doc.isIncomplete
+            case "Verify":
+                return doc.requiresReview
+            default:
+                return false
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if relevantDocuments.isEmpty {
+                    ContentUnavailableView {
+                        Label(workflow.title, systemImage: workflow.systemImage)
+                    } description: {
+                        Text("No documents match this workflow.")
+                    }
+                } else {
+                    ForEach(relevantDocuments) { document in
+                        NavigationLink(value: document) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(document.name)
+                                    .font(.body.weight(.semibold))
+                                Text(document.documentType.rawValue)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(workflow.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
