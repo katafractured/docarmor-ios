@@ -123,6 +123,7 @@ struct DocumentDetailView: View {
                 .padding(20)
             }
         }
+        .background(Color(.systemBackground))
         .navigationTitle(document.name)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
