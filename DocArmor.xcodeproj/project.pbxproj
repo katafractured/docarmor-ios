@@ -22,6 +22,13 @@
 			remoteGlobalIDString = BC38117E2F7397AC00CE6623;
 			remoteInfo = DocArmorWidgetExtension;
 		};
+		BC9900F02F9F2392004D730B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9B28CB2CAE2648C2AB2AC2BB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 268164EE7D2044D1A8DDB1F4;
+			remoteInfo = DocArmor;
+		};
 		D0C0A1032F90000100C0FFEE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 9B28CB2CAE2648C2AB2AC2BB /* Project object */;
@@ -50,12 +57,12 @@
 		BC38117F2F7397AC00CE6623 /* DocArmorWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DocArmorWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC3811812F7397AC00CE6623 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		BC3811832F7397AC00CE6623 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		BC9900EC2F9F2392004D730B /* DocArmorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DocArmorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BC9900F52F9F2402004D730B /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
+		BC9900F62F9F2402004D730B /* ScreenshotUITestsBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotUITestsBase.swift; sourceTree = "<group>"; };
+		BC9900F72F9F2402004D730B /* SnapshotHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotHelper.swift; sourceTree = "<group>"; };
 		CCC915A576C44C2F9A6E6450 /* DocArmor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DocArmor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0C0A1002F90000100C0FFEE /* DocArmorShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DocArmorShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		22C7E190362840C99CE43A25 /* EntitlementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocArmor/Services/EntitlementService.swift; sourceTree = "<group>"; };
-		470CD547808D4E78969BDDD5 /* ProductID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocArmor/Models/ProductID.swift; sourceTree = "<group>"; };
-		51FE14F3E63A45C0BE27FA17 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocArmor/Views/Paywall/PaywallView.swift; sourceTree = "<group>"; };
-		2970969CAAC84B5F8611EB32 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DocArmor/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -89,6 +96,11 @@
 			path = DocArmorWidgetExtension;
 			sourceTree = "<group>";
 		};
+		BC9900ED2F9F2392004D730B /* DocArmorTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DocArmorTests;
+			sourceTree = "<group>";
+		};
 		D0C0A1052F90000100C0FFEE /* DocArmorShareExtension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -117,6 +129,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BC9900E92F9F2392004D730B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D0C0A1072F90000100C0FFEE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -133,6 +152,7 @@
 				CCC915A576C44C2F9A6E6450 /* DocArmor.app */,
 				BC38117F2F7397AC00CE6623 /* DocArmorWidgetExtension.appex */,
 				D0C0A1002F90000100C0FFEE /* DocArmorShareExtension.appex */,
+				BC9900EC2F9F2392004D730B /* DocArmorTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -146,14 +166,26 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		BC9900F82F9F2402004D730B /* DocArmorUITests */ = {
+			isa = PBXGroup;
+			children = (
+				BC9900F52F9F2402004D730B /* ScreenshotTests.swift */,
+				BC9900F62F9F2402004D730B /* ScreenshotUITestsBase.swift */,
+				BC9900F72F9F2402004D730B /* SnapshotHelper.swift */,
+			);
+			path = DocArmorUITests;
+			sourceTree = "<group>";
+		};
 		D9C45622D4A2419C94490E2F = {
 			isa = PBXGroup;
 			children = (
 				4CDC3B3D17A545FEA820D9F2 /* DocArmor */,
 				BC3811852F7397AC00CE6623 /* DocArmorWidgetExtension */,
 				D0C0A1052F90000100C0FFEE /* DocArmorShareExtension */,
+				BC9900ED2F9F2392004D730B /* DocArmorTests */,
 				BC3811802F7397AC00CE6623 /* Frameworks */,
 				7F31E9617BF54703BCB8493C /* Products */,
+				BC9900F82F9F2402004D730B /* DocArmorUITests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -208,6 +240,29 @@
 			productReference = BC38117F2F7397AC00CE6623 /* DocArmorWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BC9900EB2F9F2392004D730B /* DocArmorTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC9900F22F9F2392004D730B /* Build configuration list for PBXNativeTarget "DocArmorTests" */;
+			buildPhases = (
+				BC9900E82F9F2392004D730B /* Sources */,
+				BC9900E92F9F2392004D730B /* Frameworks */,
+				BC9900EA2F9F2392004D730B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BC9900F12F9F2392004D730B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				BC9900ED2F9F2392004D730B /* DocArmorTests */,
+			);
+			name = DocArmorTests;
+			packageProductDependencies = (
+			);
+			productName = DocArmorTests;
+			productReference = BC9900EC2F9F2392004D730B /* DocArmorTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		D0C0A10A2F90000100C0FFEE /* DocArmorShareExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D0C0A10B2F90000100C0FFEE /* Build configuration list for PBXNativeTarget "DocArmorShareExtension" */;
@@ -237,7 +292,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					268164EE7D2044D1A8DDB1F4 = {
@@ -245,6 +300,10 @@
 					};
 					BC38117E2F7397AC00CE6623 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					BC9900EB2F9F2392004D730B = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = 268164EE7D2044D1A8DDB1F4;
 					};
 					D0C0A10A2F90000100C0FFEE = {
 						CreatedOnToolsVersion = 26.3;
@@ -260,17 +319,18 @@
 			);
 			mainGroup = D9C45622D4A2419C94490E2F;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
-			productRefGroup = 7F31E9617BF54703BCB8493C /* Products */;
-			projectDirPath = "";
 			packageReferences = (
 				A1B2C3D4E5F60001A2B3C4D5 /* XCRemoteSwiftPackageReference "KatafractStyle" */,
 			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7F31E9617BF54703BCB8493C /* Products */;
+			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				268164EE7D2044D1A8DDB1F4 /* DocArmor */,
 				BC38117E2F7397AC00CE6623 /* DocArmorWidgetExtension */,
 				D0C0A10A2F90000100C0FFEE /* DocArmorShareExtension */,
+				BC9900EB2F9F2392004D730B /* DocArmorTests */,
 			);
 		};
 /* End PBXProject section */
@@ -284,6 +344,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BC38117D2F7397AC00CE6623 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC9900EA2F9F2392004D730B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -314,6 +381,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BC9900E82F9F2392004D730B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D0C0A1062F90000100C0FFEE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -328,6 +402,11 @@
 			isa = PBXTargetDependency;
 			target = BC38117E2F7397AC00CE6623 /* DocArmorWidgetExtension */;
 			targetProxy = BC38118F2F7397AE00CE6623 /* PBXContainerItemProxy */;
+		};
+		BC9900F12F9F2392004D730B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 268164EE7D2044D1A8DDB1F4 /* DocArmor */;
+			targetProxy = BC9900F02F9F2392004D730B /* PBXContainerItemProxy */;
 		};
 		D0C0A1022F90000100C0FFEE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -439,8 +518,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DocArmorWidgetExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DocArmorWidgetExtension;
@@ -470,8 +549,8 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DocArmorWidgetExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DocArmorWidgetExtension;
@@ -494,12 +573,65 @@
 			};
 			name = Release;
 		};
+		BC9900F32F9F2392004D730B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.DocArmorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DocArmor.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DocArmor";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		BC9900F42F9F2392004D730B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.DocArmorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DocArmor.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DocArmor";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
 		D0C0A10C2F90000100C0FFEE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DocArmorShareExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Save to DocArmor";
@@ -527,8 +659,8 @@
 			buildSettings = {
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DocArmorShareExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Save to DocArmor";
@@ -687,6 +819,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		BC9900F22F9F2392004D730B /* Build configuration list for PBXNativeTarget "DocArmorTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC9900F32F9F2392004D730B /* Debug */,
+				BC9900F42F9F2392004D730B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		D0C0A10B2F90000100C0FFEE /* Build configuration list for PBXNativeTarget "DocArmorShareExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -697,6 +838,7 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		A1B2C3D4E5F60001A2B3C4D5 /* XCRemoteSwiftPackageReference "KatafractStyle" */ = {
 			isa = XCRemoteSwiftPackageReference;
