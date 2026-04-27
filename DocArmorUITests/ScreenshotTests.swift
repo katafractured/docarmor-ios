@@ -40,9 +40,9 @@ final class ScreenshotTests: XCTestCase {
         vaultTab.tap()
 
         sleep(1)
-        let firstDoc = app.cells.element(boundBy: 0)
-        XCTAssertTrue(firstDoc.exists)
-        firstDoc.tap()
+        let firstDocButton = app.buttons.containing(NSPredicate(format: "label CONTAINS[c] 'quick access'")).element(boundBy: 0)
+        XCTAssertTrue(firstDocButton.exists)
+        firstDocButton.tap()
 
         sleep(1)
         snapshot("03_DocumentDetail_iPhone17ProMax")
@@ -115,9 +115,9 @@ final class ScreenshotTests_iPad: XCTestCase {
         vaultTab.tap()
 
         sleep(1)
-        let firstDoc = app.cells.element(boundBy: 0)
-        XCTAssertTrue(firstDoc.exists)
-        firstDoc.tap()
+        let firstDocButton = app.buttons.containing(NSPredicate(format: "label CONTAINS[c] 'quick access'")).element(boundBy: 0)
+        XCTAssertTrue(firstDocButton.exists)
+        firstDocButton.tap()
 
         sleep(1)
         snapshot("02_DocumentDetail_iPad13ProM5")
