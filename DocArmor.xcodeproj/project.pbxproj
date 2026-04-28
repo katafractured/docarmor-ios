@@ -29,6 +29,13 @@
 			remoteGlobalIDString = D0C0A10A2F90000100C0FFEE;
 			remoteInfo = DocArmorShareExtension;
 		};
+		F1A2B3C4D5E6F00EA2B3C4D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9B28CB2CAE2648C2AB2AC2BB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 268164EE7D2044D1A8DDB1F4;
+			remoteInfo = DocArmor;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -56,6 +63,7 @@
 		470CD547808D4E78969BDDD5 /* ProductID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocArmor/Models/ProductID.swift; sourceTree = "<group>"; };
 		51FE14F3E63A45C0BE27FA17 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocArmor/Views/Paywall/PaywallView.swift; sourceTree = "<group>"; };
 		2970969CAAC84B5F8611EB32 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DocArmor/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F1A2B3C4D5E6F007A2B3C4D5 /* DocArmorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = "wrapper.cfbundle"; includeInIndex = 0; path = DocArmorUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -95,6 +103,11 @@
 				D0C0A1042F90000100C0FFEE /* Exceptions for "DocArmorShareExtension" folder in "DocArmorShareExtension" target */,
 			);
 			path = DocArmorShareExtension;
+			sourceTree = "<group>";
+		};
+		F1A2B3C4D5E6F010A2B3C4D5 /* DocArmorUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DocArmorUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -229,6 +242,29 @@
 			productName = DocArmorShareExtension;
 			productReference = D0C0A1002F90000100C0FFEE /* DocArmorShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
+		};
+		F1A2B3C4D5E6F008A2B3C4D5 /* DocArmorUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1A2B3C4D5E6F009A2B3C4D5 /* Build configuration list for PBXNativeTarget "DocArmorUITests" */;
+			buildPhases = (
+				F1A2B3C4D5E6F00AA2B3C4D5 /* Sources */,
+				F1A2B3C4D5E6F00BA2B3C4D5 /* Frameworks */,
+				F1A2B3C4D5E6F00CA2B3C4D5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F1A2B3C4D5E6F00DA2B3C4D5 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F1A2B3C4D5E6F010A2B3C4D5 /* DocArmorUITests */,
+			);
+			name = DocArmorUITests;
+			packageProductDependencies = (
+			);
+			productName = DocArmorUITests;
+			productReference = F1A2B3C4D5E6F007A2B3C4D5 /* DocArmorUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -656,6 +692,44 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
+		};
+		F1A2B3C4D5E6F009A2B3C4D5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.1.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.katafract.DocArmor.DocArmorUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DocArmor.app/DocArmor";
+			};
+			name = Debug;
+		};
+		F1A2B3C4D5E6F00FA2B3C4D5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.1.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.katafract.DocArmor.DocArmorUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DocArmor.app/DocArmor";
+			};
+			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
