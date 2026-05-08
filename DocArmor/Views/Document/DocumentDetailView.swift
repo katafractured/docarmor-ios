@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import CryptoKit
 import KatafractStyle
 
 struct DocumentDetailView: View {
