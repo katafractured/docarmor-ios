@@ -112,6 +112,7 @@ platform :ios do
       app_identifier: ENV["BUNDLE_ID"],
       skip_binary_upload: true,
       skip_screenshots: true,
+      skip_metadata: true,
       submit_for_review: true,
       automatic_release: false,
       force: true,
