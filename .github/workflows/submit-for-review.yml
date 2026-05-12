@@ -44,13 +44,15 @@ jobs:
             echo "using local ASC key at $ASC_KEY_PATH"
           fi
 
+      - name: Install gems
+        run: bundle install --quiet
+
       - name: Submit for App Store review
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           BUNDLE_ID: com.katafract.DocArmor
-        run: |
-          bundle exec fastlane submit_for_review
+        run: bundle exec fastlane submit_for_review
 
       - name: Notify Matrix
         if: always()
