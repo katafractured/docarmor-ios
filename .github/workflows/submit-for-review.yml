@@ -1,0 +1,64 @@
+name: Submit for App Store Review
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: submit-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  submit:
+    name: Submit DocArmor for review
+    runs-on: [ self-hosted, macOS, ios-build ]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - name: Load runner env
+        run: |
+          if [ ! -f "$HOME/runner-env/docarmor.env" ]; then
+            echo "::error::Missing $HOME/runner-env/docarmor.env"; exit 1
+          fi
+          grep -v '^#' "$HOME/runner-env/docarmor.env" | grep '=' >> "$GITHUB_ENV"
+
+      - name: Ensure ASC private key on disk
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          if [ ! -f "$ASC_KEY_PATH" ]; then
+            if [ -n "$ASC_PRIVATE_KEY" ]; then
+              mkdir -p "$(dirname "$ASC_KEY_PATH")"
+              printf '%s' "$ASC_PRIVATE_KEY" > "$ASC_KEY_PATH"
+              chmod 600 "$ASC_KEY_PATH"
+              echo "wrote ASC key from secret"
+            else
+              echo "::error::no ASC_PRIVATE_KEY secret and no local file at $ASC_KEY_PATH"; exit 1
+            fi
+          else
+            echo "using local ASC key at $ASC_KEY_PATH"
+          fi
+
+      - name: Submit for App Store review
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          BUNDLE_ID: com.katafract.DocArmor
+        run: |
+          bundle exec fastlane submit_for_review
+
+      - name: Notify Matrix
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+          PAYLOAD="{\"text\":\"$EMOJI DocArmor submit_for_review · $STATUS · run #${{ github.run_number }}\"}"
+          curl -s -X POST https://webhooks.katafract.io/webhook/ci \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: ${{ secrets.MATRIX_WEBHOOK_SECRET }}" \
+            -d "$PAYLOAD" || true
