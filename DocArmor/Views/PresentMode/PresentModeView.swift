@@ -20,15 +20,23 @@ struct PresentModeView: View {
     }
 
     var body: some View {
-        LandscapeOnlyContainer {
-            PresentModeBody(
-                images: images,
-                initialIndex: initialIndex,
-                documentName: documentName
-            )
+        if ScreenshotMode.isEnabled {
+            // Skip landscape-only container in screenshot mode — the orientation
+            // request races the snapshot timer and the card ends up off-center.
+            PresentModeBody(images: images, initialIndex: initialIndex, documentName: documentName)
+                .ignoresSafeArea()
+                .background(.black)
+        } else {
+            LandscapeOnlyContainer {
+                PresentModeBody(
+                    images: images,
+                    initialIndex: initialIndex,
+                    documentName: documentName
+                )
+            }
+            .ignoresSafeArea()
+            .background(.black)
         }
-        .ignoresSafeArea()
-        .background(.black)
     }
 }
 
